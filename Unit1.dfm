@@ -90,8 +90,7 @@ object Form1: TForm1
     Params.Strings = (
       'User_Name=root'
       'Server=localhost'
-      'Database=delphichecklist'
-      'Port=3307'
+      'Database=checklistdelphi'
       'DriverID=MySQL')
     Left = 728
     Top = 544

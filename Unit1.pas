@@ -45,61 +45,61 @@ implementation
 procedure TForm1.FormCreate(Sender: TObject);
 var
   i: Integer;
-  NodoPadre, NodoHijo: TTreeNode;   // Declaración correcta de variables locales
+  NodoPadre, NodoHijo: TTreeNode;
+  IdPadre: Integer;
 begin
   FDConnection1.Connected := True;
-  FDQuery1.Open;
-
   WindowState := wsMaximized;
-
-  // Activar checkboxes en el TreeView
   TreeView1.CheckBoxes := True;
 
-  // Recorrer el dataset y construir el árbol
-  FDQuery1.First;
+  // --- BORRAR todo lo que haya en el árbol antes de cargar ---
+  TreeView1.Items.Clear;
+
+  // --- UNA SOLA QUERY ordenada: raíces primero, luego hijos por ID ---
+  FDQuery1.Close;
+  FDQuery1.SQL.Text :=
+    'SELECT * FROM item ' +
+    'WHERE id_lista = 1 ' +
+    'ORDER BY ISNULL(id_item_padre) DESC, id ASC';
+  FDQuery1.Open;
+
   while not FDQuery1.EOF do
   begin
-    // Verificar si es nodo raíz (id_lista_padre = 0)
-    if FDQuery1.FieldByName('id_lista_padre').AsInteger = 0 then
+    if FDQuery1.FieldByName('id_item_padre').IsNull then
     begin
+      // --- Nodo RAÍZ ---
       NodoPadre := TreeView1.Items.Add(nil, FDQuery1.FieldByName('texto').AsString);
-      NodoPadre.Checked := False;   // Inicialmente desmarcado
+      NodoPadre.Checked := False;
+      NodoPadre.Data    := Pointer(FDQuery1.FieldByName('id').AsInteger);
     end
     else
     begin
-      // Obtener el texto del nodo padre desde la base de datos
-      FDQuery2.SQL.Text := 'SELECT texto FROM item WHERE id = :id';
-      FDQuery2.Params.Clear;
-      FDQuery2.Params.Add.Name := 'id';
-      FDQuery2.ParamByName('id').AsInteger := FDQuery1.FieldByName('id_lista_padre').AsInteger;
-      FDQuery2.Open;
-      FDQuery2.First;
-
-      // Buscar el nodo padre en el TreeView por su texto
+      // --- Nodo HIJO: buscar su padre por ID en .Data ---
+      IdPadre   := FDQuery1.FieldByName('id_item_padre').AsInteger;
       NodoPadre := nil;
+
       for i := 0 to TreeView1.Items.Count - 1 do
       begin
-        if TreeView1.Items[i].Text = FDQuery2.FieldByName('texto').AsString then
+        if Integer(TreeView1.Items[i].Data) = IdPadre then
         begin
           NodoPadre := TreeView1.Items[i];
           Break;
         end;
       end;
 
-      // Si se encontró el padre, agregar como hijo; sino, agregar como raíz (por seguridad)
       if NodoPadre <> nil then
         NodoHijo := TreeView1.Items.AddChild(NodoPadre, FDQuery1.FieldByName('texto').AsString)
       else
         NodoHijo := TreeView1.Items.Add(nil, FDQuery1.FieldByName('texto').AsString);
 
       NodoHijo.Checked := False;
-      FDQuery2.Close;
+      NodoHijo.Data    := Pointer(FDQuery1.FieldByName('id').AsInteger);
     end;
 
     FDQuery1.Next;
   end;
 
-  // Expandir todos los nodos para visualización inmediata
+  FDQuery1.Close;
   TreeView1.FullExpand;
 end;
 
