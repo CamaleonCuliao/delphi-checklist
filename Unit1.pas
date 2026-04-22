@@ -1,4 +1,4 @@
-unit Unit1;
+﻿unit Unit1;
 
 interface
 
@@ -10,8 +10,7 @@ uses
   FireDAC.Stan.Async, FireDAC.Phys, FireDAC.VCLUI.Wait, Data.DB,
   FireDAC.Comp.Client, FireDAC.Phys.MySQL, FireDAC.Phys.MySQLDef,
   FireDAC.Stan.Param, FireDAC.DatS, FireDAC.DApt.Intf, FireDAC.DApt, Vcl.Grids,
-  Vcl.DBGrids, FireDAC.Comp.DataSet, Vcl.ExtCtrls, Vcl.Buttons, Vcl.WinXCtrls,
-  Vcl.Themes;
+  Vcl.DBGrids, FireDAC.Comp.DataSet, Vcl.ExtCtrls, Vcl.Buttons, Vcl.WinXCtrls, Vcl.Themes;
 
 type
   TForm1 = class(TForm)
@@ -21,6 +20,7 @@ type
     FDConnection1: TFDConnection;
     FDQuery1: TFDQuery;
     DataSource1: TDataSource;
+    DBGrid1: TDBGrid;
     FDQuery2: TFDQuery;
     Panel1: TPanel;
     TreeView1: TTreeView;
@@ -32,7 +32,7 @@ type
     procedure FormCreate(Sender: TObject);
     procedure ToggleSwitch1Click(Sender: TObject);
   private
-    { Private declarations }
+    procedure TreeViewClick(Sender: TObject);
   public
     { Public declarations }
   end;
@@ -44,6 +44,35 @@ implementation
 
 {$R *.dfm}
 
+
+procedure MarcarHijosRecursivo(Nodo: TTreeNode; Marcado: Boolean; Query: TFDQuery);
+var
+  Hijo: TTreeNode;
+begin
+  Nodo.Checked := Marcado;
+
+  Query.Close;
+  Query.SQL.Text :=
+    'UPDATE item SET ' +
+    '  completado = :completado, ' +
+    '  fecha_completado = :fecha ' +
+    'WHERE id = :id';
+  Query.ParamByName('completado').AsInteger := Integer(Marcado);
+  if Marcado then
+    Query.ParamByName('fecha').AsDateTime := Now
+  else
+    Query.ParamByName('fecha').Clear;
+  Query.ParamByName('id').AsInteger := Integer(Nodo.Data);
+  Query.ExecSQL;
+
+  Hijo := Nodo.getFirstChild;
+  while Hijo <> nil do
+  begin
+    MarcarHijosRecursivo(Hijo, Marcado, Query);
+    Hijo := Hijo.getNextSibling;
+  end;
+end;
+
 procedure TForm1.FormCreate(Sender: TObject);
 var
   i: Integer;
@@ -53,11 +82,12 @@ begin
   FDConnection1.Connected := True;
   WindowState := wsMaximized;
   TreeView1.CheckBoxes := True;
+  TreeView1.OnClick := TreeViewClick;
 
-  // --- BORRAR todo lo que haya en el �rbol antes de cargar ---
+  // --- BORRAR todo lo que haya en el árbol antes de cargar ---
   TreeView1.Items.Clear;
 
-  // --- UNA SOLA QUERY ordenada: ra�ces primero, luego hijos por ID ---
+  // --- UNA SOLA QUERY ordenada: raíces primero, luego hijos por ID ---
   FDQuery1.Close;
   FDQuery1.SQL.Text :=
     'SELECT * FROM item ' +
@@ -69,7 +99,7 @@ begin
   begin
     if FDQuery1.FieldByName('id_item_padre').IsNull then
     begin
-      // --- Nodo RA�Z ---
+      // --- Nodo RAÍZ ---
       NodoPadre := TreeView1.Items.Add(nil, FDQuery1.FieldByName('texto').AsString);
       NodoPadre.Checked := False;
       NodoPadre.Data    := Pointer(FDQuery1.FieldByName('id').AsInteger);
@@ -106,12 +136,33 @@ begin
 end;
 
 procedure TForm1.ToggleSwitch1Click(Sender: TObject);
-
 begin
   if ToggleSwitch1.State = tssOn then
   TStyleManager.SetStyle('Aqua Light Slate') // Estilo claro
   else
   TStyleManager.SetStyle('Glossy');  // Estilo oscuro
+end;
+
+procedure TForm1.TreeViewClick(Sender: TObject);
+var
+  Nodo: TTreeNode;
+  HitTest: THitTests;
+  PuntoLocal: TPoint;
+begin
+  // Obtener la posición del click en coordenadas del TreeView
+  PuntoLocal := TreeView1.ScreenToClient(Mouse.CursorPos);
+
+  // Comprobar que el click fue exactamente sobre el checkbox
+  HitTest := TreeView1.GetHitTestInfoAt(PuntoLocal.X, PuntoLocal.Y);
+  if not (htOnStateIcon in HitTest) then
+    Exit;
+
+  // Obtener el nodo por posición, no por Selected
+  Nodo := TreeView1.GetNodeAt(PuntoLocal.X, PuntoLocal.Y);
+  if Nodo = nil then
+    Exit;
+
+  MarcarHijosRecursivo(Nodo, Nodo.Checked, FDQuery2);
 end;
 
 end.

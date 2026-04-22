@@ -27,6 +27,19 @@ object Form1: TForm1
     Height = 33
     Caption = 'Eliminar'
   end
+  object DBGrid1: TDBGrid
+    Left = 712
+    Top = 64
+    Width = 320
+    Height = 120
+    DataSource = DataSource1
+    TabOrder = 0
+    TitleFont.Charset = DEFAULT_CHARSET
+    TitleFont.Color = clWindowText
+    TitleFont.Height = -12
+    TitleFont.Name = 'Segoe UI'
+    TitleFont.Style = []
+  end
   object Panel1: TPanel
     Left = 16
     Top = 8
@@ -35,10 +48,10 @@ object Form1: TForm1
     Caption = 'Panel1'
     Color = clBackground
     ParentBackground = False
-    TabOrder = 0
+    TabOrder = 1
     object TreeView1: TTreeView
       Left = 8
-      Top = 16
+      Top = 24
       Width = 609
       Height = 625
       Indent = 19
@@ -51,7 +64,7 @@ object Form1: TForm1
     Width = 121
     Height = 25
     Caption = 'Crear Lista'
-    TabOrder = 1
+    TabOrder = 2
   end
   object borrarLista: TBitBtn
     Left = 839
@@ -59,18 +72,16 @@ object Form1: TForm1
     Width = 121
     Height = 25
     Caption = 'Borrar Lista'
-    TabOrder = 2
+    TabOrder = 3
   end
   object ToggleSwitch1: TToggleSwitch
-    Left = 1032
-    Top = 24
+    Left = 984
+    Top = 29
     Width = 131
     Height = 20
-    FrameColor = clMenu
     StateCaptions.CaptionOn = 'Claro Activo'
     StateCaptions.CaptionOff = 'Oscuro Activo'
-    TabOrder = 3
-    ThumbColor = clWindow
+    TabOrder = 4
     OnClick = ToggleSwitch1Click
   end
   object MainMenu1: TMainMenu
@@ -89,8 +100,7 @@ object Form1: TForm1
     Params.Strings = (
       'User_Name=root'
       'Server=localhost'
-      'Database=delphichecklist'
-      'Port=3307'
+      'Database=checklistdelphi'
       'DriverID=MySQL')
     Left = 728
     Top = 544
