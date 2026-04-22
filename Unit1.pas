@@ -10,7 +10,8 @@ uses
   FireDAC.Stan.Async, FireDAC.Phys, FireDAC.VCLUI.Wait, Data.DB,
   FireDAC.Comp.Client, FireDAC.Phys.MySQL, FireDAC.Phys.MySQLDef,
   FireDAC.Stan.Param, FireDAC.DatS, FireDAC.DApt.Intf, FireDAC.DApt, Vcl.Grids,
-  Vcl.DBGrids, FireDAC.Comp.DataSet, Vcl.ExtCtrls, Vcl.Buttons;
+  Vcl.DBGrids, FireDAC.Comp.DataSet, Vcl.ExtCtrls, Vcl.Buttons, Vcl.WinXCtrls,
+  Vcl.Themes;
 
 type
   TForm1 = class(TForm)
@@ -20,7 +21,6 @@ type
     FDConnection1: TFDConnection;
     FDQuery1: TFDQuery;
     DataSource1: TDataSource;
-    DBGrid1: TDBGrid;
     FDQuery2: TFDQuery;
     Panel1: TPanel;
     TreeView1: TTreeView;
@@ -28,7 +28,9 @@ type
     eliminar: TSpeedButton;
     crearlista: TBitBtn;
     borrarLista: TBitBtn;
+    ToggleSwitch1: TToggleSwitch;
     procedure FormCreate(Sender: TObject);
+    procedure ToggleSwitch1Click(Sender: TObject);
   private
     { Private declarations }
   public
@@ -101,6 +103,15 @@ begin
 
   FDQuery1.Close;
   TreeView1.FullExpand;
+end;
+
+procedure TForm1.ToggleSwitch1Click(Sender: TObject);
+
+begin
+  if ToggleSwitch1.State = tssOn then
+  TStyleManager.SetStyle('Aqua Light Slate') // Estilo claro
+  else
+  TStyleManager.SetStyle('Glossy');  // Estilo oscuro
 end;
 
 end.
