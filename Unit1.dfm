@@ -2,7 +2,7 @@ object Form1: TForm1
   Left = 0
   Top = 0
   Caption = 'Delphi Checklist'
-  ClientHeight = 688
+  ClientHeight = 708
   ClientWidth = 1132
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -10,7 +10,6 @@ object Form1: TForm1
   Font.Height = -12
   Font.Name = 'Segoe UI'
   Font.Style = []
-  Menu = MainMenu1
   OnCreate = FormCreate
   TextHeight = 15
   object anadir: TSpeedButton
@@ -32,7 +31,6 @@ object Form1: TForm1
     Top = 64
     Width = 320
     Height = 120
-    DataSource = DataSource1
     TabOrder = 0
     TitleFont.Charset = DEFAULT_CHARSET
     TitleFont.Color = clWindowText
@@ -83,50 +81,5 @@ object Form1: TForm1
     StateCaptions.CaptionOff = 'Oscuro Activo'
     TabOrder = 4
     OnClick = ToggleSwitch1Click
-  end
-  object MainMenu1: TMainMenu
-    BiDiMode = bdLeftToRight
-    ParentBiDiMode = False
-    Left = 880
-    Top = 472
-    object f1: TMenuItem
-      Caption = 'API'
-    end
-    object dwaf1: TMenuItem
-      Caption = 'Frontend'
-    end
-  end
-  object FDConnection1: TFDConnection
-    Params.Strings = (
-      'User_Name=root'
-      'Server=localhost'
-      'Database=checklistdelphi'
-      'DriverID=MySQL')
-    Left = 728
-    Top = 544
-  end
-  object FDQuery1: TFDQuery
-    Connection = FDConnection1
-    SQL.Strings = (
-      'SELECT * FROM item')
-    Left = 816
-    Top = 544
-  end
-  object DataSource1: TDataSource
-    DataSet = FDQuery1
-    Left = 896
-    Top = 544
-  end
-  object FDQuery2: TFDQuery
-    Connection = FDConnection1
-    SQL.Strings = (
-      'SELECT * FROM item WHERE id_lista_padre = :id')
-    Left = 816
-    Top = 488
-    ParamData = <
-      item
-        Name = 'ID'
-        ParamType = ptInput
-      end>
   end
 end

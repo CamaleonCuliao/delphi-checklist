@@ -1,2 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<BorlandProject/>
+<BorlandProject>
+  <Transactions>
+    <Transaction>2026/04/23 09:10:57.825,=C:\Users\Alejandro\Desktop\delphi-checklist\delphi-checklist-main\Unit2.pas</Transaction>
+    <Transaction>2026/04/23 09:12:13.797,C:\Users\Alejandro\Desktop\delphi-checklist\Unit2.dfm=C:\Users\Alejandro\Desktop\delphi-checklist\delphi-checklist-main\Unit2.dfm</Transaction>
+    <Transaction>2026/04/23 09:12:13.797,C:\Users\Alejandro\Desktop\delphi-checklist\Unit2.pas=C:\Users\Alejandro\Desktop\delphi-checklist\delphi-checklist-main\Unit2.pas</Transaction>
+    <Transaction>2026/04/23 09:18:51.293,=C:\Users\Alejandro\Desktop\delphi-checklist\delphi-checklist-main\Unit3.pas</Transaction>
+  </Transactions>
+</BorlandProject>

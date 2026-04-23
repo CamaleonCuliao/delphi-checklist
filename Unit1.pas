@@ -3,7 +3,7 @@
 interface
 
 uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Unit3, Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.CheckLst, Vcl.ComCtrls,
   Vcl.Menus, FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Error,
   FireDAC.UI.Intf, FireDAC.Phys.Intf, FireDAC.Stan.Def, FireDAC.Stan.Pool,
@@ -14,14 +14,7 @@ uses
 
 type
   TForm1 = class(TForm)
-    MainMenu1: TMainMenu;
-    f1: TMenuItem;
-    dwaf1: TMenuItem;
-    FDConnection1: TFDConnection;
-    FDQuery1: TFDQuery;
-    DataSource1: TDataSource;
     DBGrid1: TDBGrid;
-    FDQuery2: TFDQuery;
     Panel1: TPanel;
     TreeView1: TTreeView;
     anadir: TSpeedButton;
@@ -79,7 +72,7 @@ var
   NodoPadre, NodoHijo: TTreeNode;
   IdPadre: Integer;
 begin
-  FDConnection1.Connected := True;
+  dm_data.FDConnection1.Connected := True;
   WindowState := wsMaximized;
   TreeView1.CheckBoxes := True;
   TreeView1.OnClick := TreeViewClick;
@@ -88,26 +81,26 @@ begin
   TreeView1.Items.Clear;
 
   // --- UNA SOLA QUERY ordenada: raíces primero, luego hijos por ID ---
-  FDQuery1.Close;
-  FDQuery1.SQL.Text :=
+  dm_data.FDQuery1.Close;
+  dm_data.FDQuery1.SQL.Text :=
     'SELECT * FROM item ' +
     'WHERE id_lista = 1 ' +
     'ORDER BY ISNULL(id_item_padre) DESC, id ASC';
-  FDQuery1.Open;
+  dm_data.FDQuery1.Open;
 
-  while not FDQuery1.EOF do
+  while not dm_data.FDQuery1.EOF do
   begin
-    if FDQuery1.FieldByName('id_item_padre').IsNull then
+    if dm_data.FDQuery1.FieldByName('id_item_padre').IsNull then
     begin
       // --- Nodo RAÍZ ---
-      NodoPadre := TreeView1.Items.Add(nil, FDQuery1.FieldByName('texto').AsString);
+      NodoPadre := TreeView1.Items.Add(nil, dm_data.FDQuery1.FieldByName('texto').AsString);
       NodoPadre.Checked := False;
-      NodoPadre.Data    := Pointer(FDQuery1.FieldByName('id').AsInteger);
+      NodoPadre.Data    := Pointer(dm_data.FDQuery1.FieldByName('id').AsInteger);
     end
     else
     begin
       // --- Nodo HIJO: buscar su padre por ID en .Data ---
-      IdPadre   := FDQuery1.FieldByName('id_item_padre').AsInteger;
+      IdPadre   := dm_data.FDQuery1.FieldByName('id_item_padre').AsInteger;
       NodoPadre := nil;
 
       for i := 0 to TreeView1.Items.Count - 1 do
@@ -120,18 +113,18 @@ begin
       end;
 
       if NodoPadre <> nil then
-        NodoHijo := TreeView1.Items.AddChild(NodoPadre, FDQuery1.FieldByName('texto').AsString)
+        NodoHijo := TreeView1.Items.AddChild(NodoPadre, dm_data.FDQuery1.FieldByName('texto').AsString)
       else
-        NodoHijo := TreeView1.Items.Add(nil, FDQuery1.FieldByName('texto').AsString);
+        NodoHijo := TreeView1.Items.Add(nil, dm_data.FDQuery1.FieldByName('texto').AsString);
 
       NodoHijo.Checked := False;
-      NodoHijo.Data    := Pointer(FDQuery1.FieldByName('id').AsInteger);
+      NodoHijo.Data    := Pointer(dm_data.FDQuery1.FieldByName('id').AsInteger);
     end;
 
-    FDQuery1.Next;
+    dm_data.FDQuery1.Next;
   end;
 
-  FDQuery1.Close;
+  dm_data.FDQuery1.Close;
   TreeView1.FullExpand;
 end;
 
@@ -162,7 +155,7 @@ begin
   if Nodo = nil then
     Exit;
 
-  MarcarHijosRecursivo(Nodo, Nodo.Checked, FDQuery2);
+  MarcarHijosRecursivo(Nodo, Nodo.Checked, dm_data.FDQuery2);
 end;
 
 end.
