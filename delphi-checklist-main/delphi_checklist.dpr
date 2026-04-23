@@ -2,7 +2,7 @@ program delphi_checklist;
 
 uses
   Vcl.Forms,
-  Unit1 in '..\Unit1.pas' {Form1},
+  Unit1 in 'Unit1.pas' {Form1},
   Vcl.Themes,
   Vcl.Styles,
   Unit3 in 'Unit3.pas' {dm_data: TDataModule},
