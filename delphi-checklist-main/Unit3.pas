@@ -16,9 +16,7 @@ type
     FDQuery1: TFDQuery;
     FDQuery2: TFDQuery;
     DataSource1: TDataSource;
-    MainMenu1: TMainMenu;
-    f1: TMenuItem;
-    dwaf1: TMenuItem;
+    FDQuery3: TFDQuery;
   private
     { Private declarations }
   public

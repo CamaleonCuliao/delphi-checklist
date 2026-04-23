@@ -72,6 +72,7 @@ var
   NodoPadre, NodoHijo: TTreeNode;
   IdPadre: Integer;
 begin
+  Self.Menu := dm_logic.MainMenu1;
   dm_data.FDConnection1.Connected := True;
   WindowState := wsMaximized;
   TreeView1.CheckBoxes := True;

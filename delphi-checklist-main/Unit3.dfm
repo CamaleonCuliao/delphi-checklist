@@ -34,16 +34,11 @@ object dm_data: Tdm_data
     Left = 56
     Top = 176
   end
-  object MainMenu1: TMainMenu
-    BiDiMode = bdLeftToRight
-    ParentBiDiMode = False
-    Left = 136
-    Top = 176
-    object f1: TMenuItem
-      Caption = 'API'
-    end
-    object dwaf1: TMenuItem
-      Caption = 'Frontend'
-    end
+  object FDQuery3: TFDQuery
+    Connection = FDConnection1
+    SQL.Strings = (
+      'SELECT * FROM lista')
+    Left = 208
+    Top = 96
   end
 end
