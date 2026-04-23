@@ -17,6 +17,7 @@ type
     FDQuery2: TFDQuery;
     DataSource1: TDataSource;
     FDQuery3: TFDQuery;
+    FDQuery4: TFDQuery;
   private
     { Private declarations }
   public

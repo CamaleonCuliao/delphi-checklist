@@ -85,6 +85,7 @@ object Form1: TForm1
     OnClick = ToggleSwitch1Click
   end
   object MainMenu1: TMainMenu
+HEAD
     Left = 728
     Top = 440
   end
@@ -97,5 +98,9 @@ object Form1: TForm1
     object pmEliminar: TMenuItem
       Caption = 'Eliminar'
     end
+
+    Left = 1056
+    Top = 592
+5600c9f1ffd6ebd1c14c6ec5aebcd712b5df809a
   end
 end

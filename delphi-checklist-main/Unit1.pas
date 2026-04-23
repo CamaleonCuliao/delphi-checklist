@@ -26,6 +26,7 @@ type
     PopupMenu1: TPopupMenu;
     pmAnadir: TMenuItem;
     pmEliminar: TMenuItem;
+
     procedure insertarLista(nombre: String);
     procedure AbrirListaClick(Sender: TObject);
     procedure mostrarListasCreadas(SubMenuItem: TMenuItem);
@@ -59,13 +60,16 @@ var
   SubMenuItem: TMenuItem;
   SubListaItem: TMenuItem;
 begin
+
+  Self.Menu := MainMenu1;
   dm_data.FDConnection1.Connected := True;
   WindowState := wsMaximized;
 
-  insertarLista('cosa');
+  insertarLista('api');
   TreeView1.OnClick := TreeViewClick;
 
   //Creacion del item del menu 'listas'
+
    MenuItem := TMenuItem.Create(MainMenu1);
    MenuItem.Caption := 'Listas';
    MainMenu1.Items.Add(MenuItem);
@@ -96,6 +100,7 @@ var
   NodoPadre, NodoHijo: TTreeNode;
   IdPadre: Integer;
   i: Integer;
+  id_lista: Integer;
 begin
   dm_data.FDConnection1.Connected := True;
   TreeView1.CheckBoxes := True;
@@ -103,12 +108,21 @@ begin
   // --- BORRAR todo lo que haya en el árbol antes de cargar ---
   TreeView1.Items.Clear;
 
+  dm_data.FDQuery4.Close;
+  dm_data.FDQuery4.SQL.Text := 'SELECT id FROM lista WHERE titulo = :titulo';
+  dm_data.FDQuery4.ParamByName('titulo').AsString := Trim(nombre);
+  dm_data.FDQuery4.Prepare;
+  dm_data.FDQuery4.Open;
+  id_lista := dm_data.FDQuery4.FieldByName('id').AsInteger;
+  dm_data.FDQuery4.Close;
+
   // --- UNA SOLA QUERY ordenada: raíces primero, luego hijos por ID ---
   dm_data.FDQuery1.Close;
   dm_data.FDQuery1.SQL.Text :=
     'SELECT * FROM item ' +
-    'WHERE id_lista = 1 ' +
+    'WHERE id_lista = :id_lista ' +
     'ORDER BY ISNULL(id_item_padre) DESC, id ASC';
+  dm_data.FDQuery1.ParamByName('id_lista').AsInteger := id_lista;
   dm_data.FDQuery1.Open;
 
   while not dm_data.FDQuery1.EOF do
@@ -155,10 +169,12 @@ end;
 procedure MarcarHijosRecursivo(Nodo: TTreeNode; Marcado: Boolean; Query: TFDQuery);
 var
   Hijo: TTreeNode;
+  QueryLista: TFDQuery;
 begin
   Nodo.Checked := Marcado;
 
   Query.Close;
+
   Query.SQL.Text :=
     'UPDATE item SET ' +
     '  completado = :completado, ' +
@@ -218,6 +234,7 @@ var
 SubListaItem: TMenuItem;
 begin
 dm_data.FDConnection1.Connected := True;
+dm_data.FDQuery3.Close;
 dm_data.FDQuery3.Open();
 
 while not dm_data.FDQuery3.EOF do
@@ -236,10 +253,12 @@ end;
 procedure TForm1.AbrirListaClick(Sender: TObject);
 var
   Item: TMenuItem;
+  i: Integer;
 begin
   Item := TMenuItem(Sender);
 
   // Aquí llamas al procedure de tu DataModule
+  Item.Caption := StringReplace(Item.Caption, '&', '', [rfReplaceAll]);
   insertarLista(Item.Caption);
 end;
 
