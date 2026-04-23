@@ -3,14 +3,14 @@
 interface
 
 uses
-  Unit3, Unit2, Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Unit3, Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.CheckLst, Vcl.ComCtrls,
   Vcl.Menus, FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Error,
   FireDAC.UI.Intf, FireDAC.Phys.Intf, FireDAC.Stan.Def, FireDAC.Stan.Pool,
   FireDAC.Stan.Async, FireDAC.Phys, FireDAC.VCLUI.Wait, Data.DB,
   FireDAC.Comp.Client, FireDAC.Phys.MySQL, FireDAC.Phys.MySQLDef,
   FireDAC.Stan.Param, FireDAC.DatS, FireDAC.DApt.Intf, FireDAC.DApt, Vcl.Grids,
-  Vcl.DBGrids, FireDAC.Comp.DataSet, Vcl.ExtCtrls, Vcl.Buttons, Vcl.WinXCtrls, Vcl.Themes;
+  Vcl.DBGrids, FireDAC.Comp.DataSet, Vcl.ExtCtrls, Vcl.Buttons, Vcl.WinXCtrls, Vcl.Themes, System.UITypes;
 
 type
   TForm1 = class(TForm)
@@ -22,13 +22,22 @@ type
     crearlista: TBitBtn;
     borrarLista: TBitBtn;
     ToggleSwitch1: TToggleSwitch;
+    MainMenu1: TMainMenu;
+    PopupMenu1: TPopupMenu;
+    pmAnadir: TMenuItem;
+    pmEliminar: TMenuItem;
     procedure insertarLista(nombre: String);
     procedure AbrirListaClick(Sender: TObject);
     procedure mostrarListasCreadas(SubMenuItem: TMenuItem);
     procedure FormCreate(Sender: TObject);
     procedure ToggleSwitch1Click(Sender: TObject);
     procedure TreeViewClick(Sender: TObject);
+    procedure pmAnadirClick(Sender: TObject);
+    procedure pmEliminarClick(Sender: TObject);
   private
+  NodoSeleccionado: TTreeNode;
+  procedure TreeViewMouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
   public
     { Public declarations }
   end;
@@ -50,28 +59,32 @@ var
   SubMenuItem: TMenuItem;
   SubListaItem: TMenuItem;
 begin
-  Self.Menu := dm_logic.MainMenu1;
   dm_data.FDConnection1.Connected := True;
   WindowState := wsMaximized;
 
   insertarLista('cosa');
   TreeView1.OnClick := TreeViewClick;
 
-    //Creacion del item del menu 'listas'
-   MenuItem := TMenuItem.Create(dm_logic.MainMenu1);
+  //Creacion del item del menu 'listas'
+   MenuItem := TMenuItem.Create(MainMenu1);
    MenuItem.Caption := 'Listas';
-   dm_logic.MainMenu1.Items.Add(MenuItem);
+   MainMenu1.Items.Add(MenuItem);
 
-   SubMenuItem := TMenuItem.Create(dm_logic.MainMenu1);
+   SubMenuItem := TMenuItem.Create(MainMenu1);
    SubMenuItem.Caption := 'Crear lista';
    MenuItem.Add(SubMenuItem);
 
-   SubMenuItem := TMenuItem.Create(dm_logic.MainMenu1);
+   SubMenuItem := TMenuItem.Create(MainMenu1);
    SubMenuItem.Caption := 'Abrir...';
    MenuItem.Add(SubMenuItem);
 
    mostrarListasCreadas(SubMenuItem);
 
+  NodoSeleccionado      := nil;
+  TreeView1.OnMouseDown := TreeViewMouseDown;
+  TreeView1.PopupMenu   := PopupMenu1;
+  pmAnadir.OnClick   := pmAnadirClick;
+  pmEliminar.OnClick := pmEliminarClick;
 end;
 
 
@@ -228,6 +241,94 @@ begin
 
   // Aquí llamas al procedure de tu DataModule
   insertarLista(Item.Caption);
+end;
+
+
+{
+  Procedure que detecta el clic derecho y guarda el nodo seleccionado
+    - Identifica el nodo bajo el cursor por posición
+}
+procedure TForm1.TreeViewMouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+begin
+  if Button <> mbRight then
+    Exit;
+
+  NodoSeleccionado := TreeView1.GetNodeAt(X, Y);
+
+  if NodoSeleccionado = nil then
+    PopupMenu1.AutoPopup := False // Bloquear popup si se clickea en un sitio que no hayan nodos
+  else
+  begin
+    PopupMenu1.AutoPopup := True;
+    TreeView1.Selected   := NodoSeleccionado;
+  end;
+end;
+
+{
+  Procedure que añade un nuevo ítem como hijo del nodo seleccionado
+    - Obtiene el ID del padre desde NodoSeleccionado.Data
+    - Inserta el ítem en la BD con el ID del padre
+    - Añade el nodo visualmente en el TreeView con su ID en .Data
+}
+procedure TForm1.pmAnadirClick(Sender: TObject);
+var
+  NodoNuevo: TTreeNode;
+  Texto: string;
+  IdPadre, IdNuevo: Integer;
+begin
+  if NodoSeleccionado = nil then Exit;
+
+  IdPadre := Integer(NodoSeleccionado.Data);
+
+  Texto := InputBox('Nuevo ítem', 'Escribe el nombre:', '');// Pide el nombre del nuevo ítem con un InputBox
+  if Trim(Texto) = '' then Exit;
+
+  dm_data.FDQuery2.Close;
+  dm_data.FDQuery2.SQL.Text :=
+    'INSERT INTO item (id_lista, id_item_padre, texto, completado) ' +
+    'VALUES (:id_lista, :id_padre, :texto, 0)';
+  dm_data.FDQuery2.ParamByName('id_lista').AsInteger := 1;
+  dm_data.FDQuery2.ParamByName('id_padre').AsInteger := IdPadre;
+  dm_data.FDQuery2.ParamByName('texto').AsString     := Texto;
+  dm_data.FDQuery2.ExecSQL;
+
+  dm_data.FDQuery2.Close;
+  dm_data.FDQuery2.SQL.Text := 'SELECT LAST_INSERT_ID() AS nuevo_id';//Recuperar el ID generado con LAST_INSERT_ID()
+  dm_data.FDQuery2.Open;
+  IdNuevo := dm_data.FDQuery2.FieldByName('nuevo_id').AsInteger;
+  dm_data.FDQuery2.Close;
+
+  NodoNuevo := TreeView1.Items.AddChild(NodoSeleccionado, Texto);
+  NodoNuevo.Checked := False;
+  NodoNuevo.Data := Pointer(IdNuevo);
+  NodoSeleccionado.Expand(False);
+end;
+
+{
+  Procedure que elimina el ítem seleccionado y todos sus hijos
+    - Obtiene el ID del ítem desde NodoSeleccionado.Data
+    - Elimina en BD (CASCADE borra los hijos automáticamente)
+}
+procedure TForm1.pmEliminarClick(Sender: TObject);
+var
+  IdItem: Integer;
+begin
+  if NodoSeleccionado = nil then Exit;
+
+  IdItem := Integer(NodoSeleccionado.Data);
+
+  if MessageDlg('¿Eliminar "' + NodoSeleccionado.Text + '" y todos sus hijos?',// Pedir confirmación al usuario antes de borrar
+                mtConfirmation, [mbYes, mbNo], 0) = mrNo then
+    Exit;
+
+  dm_data.FDQuery2.Close;
+  dm_data.FDQuery2.SQL.Text := 'DELETE FROM item WHERE id = :id';
+  dm_data.FDQuery2.ParamByName('id').AsInteger := IdItem;
+  dm_data.FDQuery2.ExecSQL;
+
+  TreeView1.Items.Delete(NodoSeleccionado);//Eliminar nodo el TreeView (También sus hijos)
+  NodoSeleccionado := nil;
 end;
 
 end.

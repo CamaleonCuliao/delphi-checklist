@@ -10,6 +10,7 @@ object Form1: TForm1
   Font.Height = -12
   Font.Name = 'Segoe UI'
   Font.Style = []
+  Menu = MainMenu1
   OnCreate = FormCreate
   TextHeight = 15
   object anadir: TSpeedButton
@@ -53,6 +54,7 @@ object Form1: TForm1
       Width = 609
       Height = 625
       Indent = 19
+      PopupMenu = PopupMenu1
       TabOrder = 0
     end
   end
@@ -81,5 +83,19 @@ object Form1: TForm1
     StateCaptions.CaptionOff = 'Oscuro Activo'
     TabOrder = 4
     OnClick = ToggleSwitch1Click
+  end
+  object MainMenu1: TMainMenu
+    Left = 728
+    Top = 440
+  end
+  object PopupMenu1: TPopupMenu
+    Left = 800
+    Top = 440
+    object pmAnadir: TMenuItem
+      Caption = 'A'#241'adir'
+    end
+    object pmEliminar: TMenuItem
+      Caption = 'Eliminar'
+    end
   end
 end

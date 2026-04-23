@@ -5,7 +5,7 @@ object dm_data: Tdm_data
     Params.Strings = (
       'User_Name=root'
       'Server=localhost'
-      'Database=delphi-checklist'
+      'Database=checklistdelphi'
       'DriverID=MySQL')
     Left = 56
     Top = 24

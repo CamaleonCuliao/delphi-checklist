@@ -5,8 +5,7 @@ uses
   Unit1 in 'Unit1.pas' {Form1},
   Vcl.Themes,
   Vcl.Styles,
-  Unit3 in 'Unit3.pas' {dm_data: TDataModule},
-  Unit2 in 'Unit2.pas' {dm_logic: TDataModule};
+  Unit3 in 'Unit3.pas' {dm_data: TDataModule};
 
 {$R *.res}
 
@@ -15,7 +14,6 @@ begin
   Application.MainFormOnTaskbar := True;
   TStyleManager.TrySetStyle('Glossy');
   Application.CreateForm(Tdm_data, dm_data);
-  Application.CreateForm(Tdm_logic, dm_logic);
   Application.CreateForm(TForm1, Form1);
   Application.Run;
 end.
