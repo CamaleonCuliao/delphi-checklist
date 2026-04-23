@@ -24,8 +24,8 @@ type
     ToggleSwitch1: TToggleSwitch;
     procedure FormCreate(Sender: TObject);
     procedure ToggleSwitch1Click(Sender: TObject);
-  private
     procedure TreeViewClick(Sender: TObject);
+  private
   public
     { Public declarations }
   end;
@@ -66,77 +66,6 @@ begin
   end;
 end;
 
-procedure TForm1.FormCreate(Sender: TObject);
-var
-  i: Integer;
-  NodoPadre, NodoHijo: TTreeNode;
-  IdPadre: Integer;
-begin
-  Self.Menu := dm_logic.MainMenu1;
-  dm_data.FDConnection1.Connected := True;
-  WindowState := wsMaximized;
-  TreeView1.CheckBoxes := True;
-  TreeView1.OnClick := TreeViewClick;
-
-  // --- BORRAR todo lo que haya en el árbol antes de cargar ---
-  TreeView1.Items.Clear;
-
-  // --- UNA SOLA QUERY ordenada: raíces primero, luego hijos por ID ---
-  dm_data.FDQuery1.Close;
-  dm_data.FDQuery1.SQL.Text :=
-    'SELECT * FROM item ' +
-    'WHERE id_lista = 1 ' +
-    'ORDER BY ISNULL(id_item_padre) DESC, id ASC';
-  dm_data.FDQuery1.Open;
-
-  while not dm_data.FDQuery1.EOF do
-  begin
-    if dm_data.FDQuery1.FieldByName('id_item_padre').IsNull then
-    begin
-      // --- Nodo RAÍZ ---
-      NodoPadre := TreeView1.Items.Add(nil, dm_data.FDQuery1.FieldByName('texto').AsString);
-      NodoPadre.Checked := False;
-      NodoPadre.Data    := Pointer(dm_data.FDQuery1.FieldByName('id').AsInteger);
-    end
-    else
-    begin
-      // --- Nodo HIJO: buscar su padre por ID en .Data ---
-      IdPadre   := dm_data.FDQuery1.FieldByName('id_item_padre').AsInteger;
-      NodoPadre := nil;
-
-      for i := 0 to TreeView1.Items.Count - 1 do
-      begin
-        if Integer(TreeView1.Items[i].Data) = IdPadre then
-        begin
-          NodoPadre := TreeView1.Items[i];
-          Break;
-        end;
-      end;
-
-      if NodoPadre <> nil then
-        NodoHijo := TreeView1.Items.AddChild(NodoPadre, dm_data.FDQuery1.FieldByName('texto').AsString)
-      else
-        NodoHijo := TreeView1.Items.Add(nil, dm_data.FDQuery1.FieldByName('texto').AsString);
-
-      NodoHijo.Checked := False;
-      NodoHijo.Data    := Pointer(dm_data.FDQuery1.FieldByName('id').AsInteger);
-    end;
-
-    dm_data.FDQuery1.Next;
-  end;
-
-  dm_data.FDQuery1.Close;
-  TreeView1.FullExpand;
-end;
-
-procedure TForm1.ToggleSwitch1Click(Sender: TObject);
-begin
-  if ToggleSwitch1.State = tssOn then
-  TStyleManager.SetStyle('Aqua Light Slate') // Estilo claro
-  else
-  TStyleManager.SetStyle('Glossy');  // Estilo oscuro
-end;
-
 procedure TForm1.TreeViewClick(Sender: TObject);
 var
   Nodo: TTreeNode;
@@ -157,6 +86,28 @@ begin
     Exit;
 
   MarcarHijosRecursivo(Nodo, Nodo.Checked, dm_data.FDQuery2);
+end;
+
+procedure TForm1.FormCreate(Sender: TObject);
+var
+  i: Integer;
+  NodoPadre, NodoHijo: TTreeNode;
+  IdPadre: Integer;
+begin
+  Self.Menu := dm_logic.MainMenu1;
+  dm_data.FDConnection1.Connected := True;
+  WindowState := wsMaximized;
+
+  dm_logic.insertarLista('cosa', TreeView1);
+  TreeView1.OnClick := TreeViewClick;
+end;
+
+procedure TForm1.ToggleSwitch1Click(Sender: TObject);
+begin
+  if ToggleSwitch1.State = tssOn then
+  TStyleManager.SetStyle('Aqua Light Slate') // Estilo claro
+  else
+  TStyleManager.SetStyle('Glossy');  // Estilo oscuro
 end;
 
 end.
