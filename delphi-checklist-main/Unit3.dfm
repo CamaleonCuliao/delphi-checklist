@@ -41,4 +41,11 @@ object dm_data: Tdm_data
     Left = 208
     Top = 96
   end
+  object FDQuery4: TFDQuery
+    Connection = FDConnection1
+    SQL.Strings = (
+      '')
+    Left = 280
+    Top = 96
+  end
 end
