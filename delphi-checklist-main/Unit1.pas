@@ -35,6 +35,7 @@ type
     procedure TreeViewClick(Sender: TObject);
     procedure pmAnadirClick(Sender: TObject);
     procedure pmEliminarClick(Sender: TObject);
+    procedure insertarNuevaLista(Sender: TObject);
   private
   NodoSeleccionado: TTreeNode;
   procedure TreeViewMouseDown(Sender: TObject; Button: TMouseButton;
@@ -76,10 +77,12 @@ begin
 
    SubMenuItem := TMenuItem.Create(MainMenu1);
    SubMenuItem.Caption := 'Crear lista';
+   SubMenuItem.OnClick :=  insertarNuevaLista;
    MenuItem.Add(SubMenuItem);
 
    SubMenuItem := TMenuItem.Create(MainMenu1);
    SubMenuItem.Caption := 'Abrir...';
+   SubMenuItem.Name := 'mnuAbrir';
    MenuItem.Add(SubMenuItem);
 
    mostrarListasCreadas(SubMenuItem);
@@ -276,7 +279,7 @@ begin
   NodoSeleccionado := TreeView1.GetNodeAt(X, Y);
 
   if NodoSeleccionado = nil then
-    PopupMenu1.AutoPopup := False // Bloquear popup si se clickea en un sitio que no hayan nodos
+    PopupMenu1.AutoPopup := True // Bloquear popup si se clickea en un sitio que no hayan nodos
   else
   begin
     PopupMenu1.AutoPopup := True;
@@ -350,4 +353,34 @@ begin
   NodoSeleccionado := nil;
 end;
 
+{
+  Procedure que añade una nueva lista a la base de datos
+}
+procedure TForm1.insertarNuevaLista(Sender: TObject);
+var
+  Texto, Descripcion: String;
+  SubItem: TMenuItem;
+begin
+  //Recoge el nombre y descripcion de la lista
+  Texto := InputBox('Nueva lista', 'Escribe el nombre:', '');
+  Descripcion := InputBox('Descripcion de la lista:', 'Escribe', '');
+
+  //La inserta en la base de datos
+  dm_data.FDQuery5.Close;
+  dm_data.FDQuery5.SQL.Text := 'INSERT INTO `lista`( `id_usuario`, `titulo`, `descripcion`, `ES_NOTA`)' +
+                                 'VALUES (1, :nombre, :descripcion, 0)';
+  dm_data.FDQuery5.ParamByName('nombre').AsString := Texto;
+  dm_data.FDQuery5.ParamByName('descripcion').AsString := Descripcion;
+  dm_data.FDQuery5.ExecSQL;
+  dm_data.FDQuery5.Close;
+
+  SubItem := TMenuItem(MainMenu1.FindComponent('mnuAbrir'));
+
+  //Borra la lista entera
+   while SubItem.Count > 0 do
+      SubItem.Delete(0);
+
+  //La vuelve a mostrtar
+  mostrarListasCreadas(SubItem);
+end;
 end.
