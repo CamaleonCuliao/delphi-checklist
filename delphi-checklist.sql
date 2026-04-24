@@ -1,135 +1,238 @@
--- phpMyAdmin SQL Dump modificado
--- Proyecto: Checklist Árbol Dinámico - Cine
--- Base de datos: delphi-checklist
--- MariaDB 10.4.32
+-- phpMyAdmin SQL Dump
+-- version 5.2.1
+-- https://www.phpmyadmin.net/
+--
+-- Servidor: 127.0.0.1
+-- Tiempo de generación: 24-04-2026 a las 09:36:00
+-- Versión del servidor: 10.4.32-MariaDB
+-- Versión de PHP: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
-SET NAMES utf8mb4;
 
--- ============================================================
--- IMPORTANTE: Orden de creación respeta claves foráneas
--- USUARIOS → PROYECTO → LISTA → ITEM → HISTORIAL
--- ============================================================
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+
+--
+-- Base de datos: `checklistdelphi`
+--
 
 -- --------------------------------------------------------
--- 1. USUARIOS
--- --------------------------------------------------------
-CREATE TABLE `usuarios` (
-  `id`          INT(11)       NOT NULL AUTO_INCREMENT,
-  `nombre`      VARCHAR(100)  NOT NULL,
-  `email`       VARCHAR(150)  NOT NULL,
-  `contraseña`  VARCHAR(255)  NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `email` (`email`)
+
+--
+-- Estructura de tabla para la tabla `historial`
+--
+
+CREATE TABLE `historial` (
+  `id` int(11) NOT NULL,
+  `id_item` int(11) NOT NULL,
+  `id_usuario` int(11) NOT NULL,
+  `tipo_cambio` varchar(50) NOT NULL,
+  `dato_anterior` text DEFAULT NULL,
+  `fecha_cambio` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Usuario de prueba para desarrollo
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `item`
+--
+
+CREATE TABLE `item` (
+  `id` int(11) NOT NULL,
+  `id_lista` int(11) DEFAULT NULL,
+  `id_item_padre` int(11) DEFAULT NULL,
+  `orden` int(11) NOT NULL DEFAULT 0,
+  `texto` varchar(255) DEFAULT NULL,
+  `completado` tinyint(1) NOT NULL DEFAULT 0,
+  `fecha_creacion` datetime NOT NULL DEFAULT current_timestamp(),
+  `fecha_completado` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `item`
+--
+
+INSERT INTO `item` (`id`, `id_lista`, `id_item_padre`, `orden`, `texto`, `completado`, `fecha_creacion`, `fecha_completado`) VALUES
+(1, 1, NULL, 1, 'app', 0, '2026-04-22 10:25:00', NULL),
+(2, 1, 1, 1, 'Filters', 0, '2026-04-22 10:25:00', NULL),
+(3, 1, 1, 2, 'HTTP', 0, '2026-04-22 10:25:00', NULL),
+(6, 1, 1, 3, 'Models', 0, '2026-04-22 10:25:00', NULL),
+(7, 1, 1, 4, 'config', 0, '2026-04-22 10:25:00', NULL),
+(8, 1, 1, 5, 'database', 0, '2026-04-22 10:25:00', NULL),
+(9, 1, 1, 6, 'route', 0, '2026-04-22 10:25:00', NULL),
+(11, 1, 3, 1, 'Controllers', 0, '2026-04-22 10:25:00', NULL),
+(12, 1, 11, 1, 'ClienteController.php', 0, '2026-04-22 10:25:00', NULL),
+(13, 1, 11, 2, 'EntradaController.php', 0, '2026-04-22 10:25:00', NULL),
+(15, 1, 2, 0, 'Filtros', 0, '2026-04-23 12:43:51', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `lista`
+--
+
+CREATE TABLE `lista` (
+  `id` int(11) NOT NULL,
+  `id_usuario` int(11) NOT NULL DEFAULT 1,
+  `titulo` varchar(255) NOT NULL,
+  `descripcion` varchar(255) DEFAULT NULL,
+  `fecha_creacion` datetime NOT NULL DEFAULT current_timestamp(),
+  `ES_NOTA` tinyint(1) NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `lista`
+--
+
+INSERT INTO `lista` (`id`, `id_usuario`, `titulo`, `descripcion`, `fecha_creacion`, `ES_NOTA`) VALUES
+(1, 1, 'api', 'Estructura de datos de la API', '2026-04-22 10:25:00', 0);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `proyecto`
+--
+
+CREATE TABLE `proyecto` (
+  `id` int(11) NOT NULL,
+  `id_usuario` int(11) NOT NULL,
+  `nombre` varchar(150) NOT NULL,
+  `descripcion` text DEFAULT NULL,
+  `fecha_creacion` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `usuarios`
+--
+
+CREATE TABLE `usuarios` (
+  `id` int(11) NOT NULL,
+  `nombre` varchar(100) NOT NULL,
+  `email` varchar(150) NOT NULL,
+  `contraseña` varchar(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `usuarios`
+--
+
 INSERT INTO `usuarios` (`id`, `nombre`, `email`, `contraseña`) VALUES
 (1, 'Admin', 'admin@cine.com', '1234');
 
--- --------------------------------------------------------
--- 2. PROYECTO
--- --------------------------------------------------------
-CREATE TABLE `proyecto` (
-  `id`             INT(11)      NOT NULL AUTO_INCREMENT,
-  `id_usuario`     INT(11)      NOT NULL,
-  `nombre`         VARCHAR(150) NOT NULL,
-  `descripcion`    TEXT                  DEFAULT NULL,
-  `fecha_creacion` DATETIME     NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`),
-  KEY `id_usuario` (`id_usuario`),
-  CONSTRAINT `proyecto_ibfk_1`
-    FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id`)
-    ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+--
+-- Índices para tablas volcadas
+--
 
--- --------------------------------------------------------
--- 3. LISTA  ← modificada respecto a la original
---    Añadido: id_usuario (FK), ES_NOTA
---    fecha_creacion cambiada de VARCHAR a DATETIME
--- --------------------------------------------------------
-CREATE TABLE `lista` (
-  `id`             INT(11)      NOT NULL AUTO_INCREMENT,
-  `id_usuario`     INT(11)      NOT NULL DEFAULT 1,
-  `titulo`         VARCHAR(255) NOT NULL,
-  `descripcion`    VARCHAR(255)          DEFAULT NULL,
-  `fecha_creacion` DATETIME     NOT NULL DEFAULT current_timestamp(),
-  `ES_NOTA`        TINYINT(1)   NOT NULL DEFAULT 0,  -- 0=Lista normal, 1=Nota
-  PRIMARY KEY (`id`),
-  KEY `id_usuario` (`id_usuario`),
-  CONSTRAINT `lista_ibfk_1`
-    FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id`)
-    ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+--
+-- Indices de la tabla `historial`
+--
+ALTER TABLE `historial`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_item` (`id_item`),
+  ADD KEY `id_usuario` (`id_usuario`);
 
--- Vuestro dato original conservado
-INSERT INTO `lista` (`id`, `id_usuario`, `titulo`, `descripcion`, `fecha_creacion`, `ES_NOTA`) VALUES
-(1, 1, 'api', 'Estructura de datos de la API', NOW(), 0);
+--
+-- Indices de la tabla `item`
+--
+ALTER TABLE `item`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_lista` (`id_lista`),
+  ADD KEY `id_item_padre` (`id_item_padre`);
 
--- --------------------------------------------------------
--- 4. ITEM  ← modificada respecto a la original
---    Renombrado: id_lista_padre → id_item_padre (autorrelación real)
---    Añadido: fecha_creacion, fecha_completado
---    Corregido: raíces con 0 → NULL
--- --------------------------------------------------------
-CREATE TABLE `item` (
-  `id`               INT(11)      NOT NULL AUTO_INCREMENT,
-  `id_lista`         INT(11)               DEFAULT NULL,
-  `id_item_padre`    INT(11)               DEFAULT NULL,  -- NULL = nodo raíz
-  `texto`            VARCHAR(255)          DEFAULT NULL,
-  `completado`       TINYINT(1)   NOT NULL DEFAULT 0,
-  `fecha_creacion`   DATETIME     NOT NULL DEFAULT current_timestamp(),
-  `fecha_completado` DATETIME              DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `id_lista`      (`id_lista`),
-  KEY `id_item_padre` (`id_item_padre`),
-  CONSTRAINT `item_ibfk_1`
-    FOREIGN KEY (`id_lista`)      REFERENCES `lista` (`id`)
-    ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `item_ibfk_2`
-    FOREIGN KEY (`id_item_padre`) REFERENCES `item` (`id`)  -- autorrelación
-    ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+--
+-- Indices de la tabla `lista`
+--
+ALTER TABLE `lista`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_usuario` (`id_usuario`);
 
--- Vuestros datos originales conservados
--- CORRECCIÓN: el 0 de id_item_padre se convierte en NULL (nodo raíz)
-INSERT INTO `item` (`id`, `id_lista`, `id_item_padre`, `texto`, `completado`) VALUES
-(1,  1, NULL, 'app',                    0),  -- raíz (era 0, ahora NULL)
-(2,  1, 1,    'Filters',                0),
-(3,  1, 1,    'HTTP',                   0),
-(6,  1, 1,    'Models',                 0),
-(7,  1, 1,    'config',                 0),
-(8,  1, 1,    'database',               0),
-(9,  1, 1,    'route',                  0),
-(11, 1, 3,    'Controllers',            0),
-(12, 1, 11,   'ClienteController.php',  0),
-(13, 1, 11,   'EntradaController.php',  0);
+--
+-- Indices de la tabla `proyecto`
+--
+ALTER TABLE `proyecto`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_usuario` (`id_usuario`);
 
--- Resetear AUTO_INCREMENT tras insertar IDs manuales
-ALTER TABLE `item` AUTO_INCREMENT = 14;
-ALTER TABLE `lista` AUTO_INCREMENT = 2;
+--
+-- Indices de la tabla `usuarios`
+--
+ALTER TABLE `usuarios`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `email` (`email`);
 
--- --------------------------------------------------------
--- 5. HISTORIAL
--- --------------------------------------------------------
-CREATE TABLE `historial` (
-  `id`            INT(11)     NOT NULL AUTO_INCREMENT,
-  `id_item`       INT(11)     NOT NULL,
-  `id_usuario`    INT(11)     NOT NULL,
-  `tipo_cambio`   VARCHAR(50) NOT NULL,  -- 'COMPLETADO','TEXTO','BORRADO','CREADO'
-  `dato_anterior` TEXT                   DEFAULT NULL,
-  `fecha_cambio`  DATETIME    NOT NULL   DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`),
-  KEY `id_item`    (`id_item`),
-  KEY `id_usuario` (`id_usuario`),
-  CONSTRAINT `historial_ibfk_1`
-    FOREIGN KEY (`id_item`)    REFERENCES `item` (`id`)
-    ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `historial_ibfk_2`
-    FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id`)
-    ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+--
+-- AUTO_INCREMENT de las tablas volcadas
+--
 
+--
+-- AUTO_INCREMENT de la tabla `historial`
+--
+ALTER TABLE `historial`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `item`
+--
+ALTER TABLE `item`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+
+--
+-- AUTO_INCREMENT de la tabla `lista`
+--
+ALTER TABLE `lista`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT de la tabla `proyecto`
+--
+ALTER TABLE `proyecto`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `usuarios`
+--
+ALTER TABLE `usuarios`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- Restricciones para tablas volcadas
+--
+
+--
+-- Filtros para la tabla `historial`
+--
+ALTER TABLE `historial`
+  ADD CONSTRAINT `historial_ibfk_1` FOREIGN KEY (`id_item`) REFERENCES `item` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `historial_ibfk_2` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Filtros para la tabla `item`
+--
+ALTER TABLE `item`
+  ADD CONSTRAINT `item_ibfk_1` FOREIGN KEY (`id_lista`) REFERENCES `lista` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `item_ibfk_2` FOREIGN KEY (`id_item_padre`) REFERENCES `item` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Filtros para la tabla `lista`
+--
+ALTER TABLE `lista`
+  ADD CONSTRAINT `lista_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Filtros para la tabla `proyecto`
+--
+ALTER TABLE `proyecto`
+  ADD CONSTRAINT `proyecto_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+
