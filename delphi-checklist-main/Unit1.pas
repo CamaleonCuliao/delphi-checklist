@@ -36,10 +36,14 @@ type
     procedure pmAnadirClick(Sender: TObject);
     procedure pmEliminarClick(Sender: TObject);
     procedure insertarNuevaLista(Sender: TObject);
+    procedure TreeView1DragOver(Sender, Source: TObject; X, Y: Integer;
+      State: TDragState; var Accept: Boolean);
+    procedure TreeView1DragDrop(Sender, Source: TObject; X, Y: Integer);
+    procedure TreeViewMouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
   private
   NodoSeleccionado: TTreeNode;
-  procedure TreeViewMouseDown(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
+  NodoArrastrado: TTreeNode;
   public
     { Public declarations }
   end;
@@ -87,11 +91,17 @@ begin
 
    mostrarListasCreadas(SubMenuItem);
 
-  NodoSeleccionado      := nil;
-  TreeView1.OnMouseDown := TreeViewMouseDown;
-  TreeView1.PopupMenu   := PopupMenu1;
-  pmAnadir.OnClick   := pmAnadirClick;
-  pmEliminar.OnClick := pmEliminarClick;
+   NodoSeleccionado      := nil;
+   TreeView1.OnMouseDown := TreeViewMouseDown;
+   TreeView1.PopupMenu   := PopupMenu1;
+   pmAnadir.OnClick   := pmAnadirClick;
+   pmEliminar.OnClick := pmEliminarClick;
+
+   //Drag & Drop
+   NodoArrastrado         := nil;
+   TreeView1.DragMode     := dmAutomatic;
+   TreeView1.OnDragOver   := TreeView1DragOver;
+   TreeView1.OnDragDrop   := TreeView1DragDrop;
 end;
 
 
@@ -273,6 +283,10 @@ end;
 procedure TForm1.TreeViewMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 begin
+  //Detecta el clic izquierdo
+  if Button = mbLeft then
+    NodoArrastrado := TreeView1.GetNodeAt(X, Y);
+
   if Button <> mbRight then
     Exit;
 
@@ -382,5 +396,75 @@ begin
 
   //La vuelve a mostrtar
   mostrarListasCreadas(SubItem);
+end;
+
+{
+  Procedure que acepta o rechaza el drag mientras se arrastra
+    - Acepta el drop solo si el origen es el propio TreeView
+    - Resalta el nodo destino visualmente mientras se arrastra
+}
+procedure TForm1.TreeView1DragOver(Sender, Source: TObject; X, Y: Integer;
+  State: TDragState; var Accept: Boolean);
+var
+  NodoDestino: TTreeNode;
+begin
+  Accept := Source = TreeView1;
+
+  NodoDestino := TreeView1.GetNodeAt(X, Y);
+  if NodoDestino <> nil then
+    TreeView1.Selected := NodoDestino;
+end;
+
+{
+  Procedure que ejecuta el drop cuando se suelta el nodo
+}
+procedure TForm1.TreeView1DragDrop(Sender, Source: TObject; X, Y: Integer);
+var
+  NodoDestino: TTreeNode;
+  NodoHijo: TTreeNode;
+  i: Integer;
+begin
+  NodoDestino := TreeView1.GetNodeAt(X, Y);
+
+  if NodoDestino = nil then Exit;
+  if NodoArrastrado = nil then Exit;
+  if NodoDestino = NodoArrastrado then Exit;
+
+  // Evitar soltar un padre sobre uno de sus propios hijos
+  NodoHijo := NodoDestino.Parent;
+  while NodoHijo <> nil do
+  begin
+    if NodoHijo = NodoArrastrado then Exit;
+    NodoHijo := NodoHijo.Parent;
+  end;
+
+  // Mover visualmente
+  NodoArrastrado.MoveTo(NodoDestino, naAddChild);
+  NodoDestino.Expand(False);
+
+  // Actualizar id_item_padre en BD
+  dm_data.FDQuery2.Close;
+  dm_data.FDQuery2.SQL.Text :=
+    'UPDATE item SET id_item_padre = :nuevo_padre WHERE id = :id';
+  dm_data.FDQuery2.ParamByName('nuevo_padre').AsInteger := Integer(NodoDestino.Data);
+  dm_data.FDQuery2.ParamByName('id').AsInteger          := Integer(NodoArrastrado.Data);
+  dm_data.FDQuery2.ExecSQL;
+
+  // Recalcular orden de los hermanos bajo el nuevo padre
+  NodoHijo := NodoDestino.getFirstChild;
+  i := 1;
+  while NodoHijo <> nil do
+  begin
+    dm_data.FDQuery2.Close;
+    dm_data.FDQuery2.SQL.Text :=
+      'UPDATE item SET orden = :orden WHERE id = :id';
+    dm_data.FDQuery2.ParamByName('orden').AsInteger := i;
+    dm_data.FDQuery2.ParamByName('id').AsInteger    := Integer(NodoHijo.Data);
+    dm_data.FDQuery2.ExecSQL;
+    Inc(i);
+    NodoHijo := NodoHijo.getNextSibling;
+  end;
+
+  NodoArrastrado := nil;
 end;
 end.
