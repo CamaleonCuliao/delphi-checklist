@@ -144,7 +144,7 @@ begin
     begin
       // --- Nodo RAÍZ ---
       NodoPadre := TreeView1.Items.Add(nil, dm_data.FDQuery1.FieldByName('texto').AsString);
-      NodoPadre.Checked := False;
+      NodoPadre.Checked := dm_data.FDQuery1.FieldByName('completado').AsBoolean;//Pillar el estado del checkbox
       NodoPadre.Data    := Pointer(dm_data.FDQuery1.FieldByName('id').AsInteger);
     end
     else
@@ -167,7 +167,7 @@ begin
       else
         NodoHijo := TreeView1.Items.Add(nil, dm_data.FDQuery1.FieldByName('texto').AsString);
 
-      NodoHijo.Checked := False;
+      NodoHijo.Checked  := dm_data.FDQuery1.FieldByName('completado').AsBoolean;
       NodoHijo.Data    := Pointer(dm_data.FDQuery1.FieldByName('id').AsInteger);
     end;
 
@@ -193,7 +193,7 @@ begin
     '  completado = :completado, ' +
     '  fecha_completado = :fecha ' +
     'WHERE id = :id';
-  Query.ParamByName('completado').AsInteger := Integer(Marcado);
+  Query.ParamByName('completado').AsBoolean := Marcado;
   if Marcado then
     Query.ParamByName('fecha').AsDateTime := Now
   else
