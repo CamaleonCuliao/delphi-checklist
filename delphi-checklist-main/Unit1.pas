@@ -41,6 +41,8 @@ type
     procedure TreeView1DragDrop(Sender, Source: TObject; X, Y: Integer);
     procedure TreeViewMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
+    procedure borrarListaFunction(Sender: TObject);
+
   private
   NodoSeleccionado: TTreeNode;
   NodoArrastrado: TTreeNode;
@@ -82,6 +84,11 @@ begin
    SubMenuItem := TMenuItem.Create(MainMenu1);
    SubMenuItem.Caption := 'Crear lista';
    SubMenuItem.OnClick :=  insertarNuevaLista;
+   MenuItem.Add(SubMenuItem);
+
+   SubMenuItem := TMenuItem.Create(MainMenu1);
+   SubMenuItem.Caption := 'Borrar lista';
+   SubMenuItem.OnClick :=  borrarListaFunction;
    MenuItem.Add(SubMenuItem);
 
    SubMenuItem := TMenuItem.Create(MainMenu1);
@@ -391,14 +398,44 @@ begin
   Texto := InputBox('Nueva lista', 'Escribe el nombre:', '');
   Descripcion := InputBox('Descripcion de la lista:', 'Escribe', '');
 
-  //La inserta en la base de datos
-  dm_data.FDQuery5.Close;
-  dm_data.FDQuery5.SQL.Text := 'INSERT INTO `lista`( `id_usuario`, `titulo`, `descripcion`, `ES_NOTA`)' +
-                                 'VALUES (1, :nombre, :descripcion, 0)';
-  dm_data.FDQuery5.ParamByName('nombre').AsString := Texto;
-  dm_data.FDQuery5.ParamByName('descripcion').AsString := Descripcion;
-  dm_data.FDQuery5.ExecSQL;
-  dm_data.FDQuery5.Close;
+  //Inserta la lista en la base de datos
+dm_data.FDQuery5.Close;
+dm_data.FDQuery5.SQL.Text :=
+  'INSERT INTO lista (id_usuario, titulo, descripcion, ES_NOTA) ' +
+  'VALUES (1, :nombre, :descripcion, 0)';
+dm_data.FDQuery5.ParamByName('nombre').AsString := Texto;
+dm_data.FDQuery5.ParamByName('descripcion').AsString := Descripcion;
+dm_data.FDQuery5.ExecSQL;
+
+//A esta lista se le añade un item por defecto llamado 'raiz'
+dm_data.FDQuery5.SQL.Text :=
+  'INSERT INTO item (id_lista, id_item_padre, texto, completado) ' +
+  'VALUES (LAST_INSERT_ID(), NULL, ''raiz'', 0)';
+dm_data.FDQuery5.ExecSQL;
+dm_data.FDQuery5.Close;
+
+  SubItem := TMenuItem(MainMenu1.FindComponent('mnuAbrir'));
+
+  //Borra la lista entera
+   while SubItem.Count > 0 do
+      SubItem.Delete(0);
+
+  //La vuelve a mostrtar
+  mostrarListasCreadas(SubItem);
+end;
+
+procedure TForm1.borrarListaFunction(Sender: TObject);
+var
+Texto: String;
+SubItem: TMenuItem;
+begin
+   Texto := InputBox('Nombre de la lista a borrar:', '', '');
+
+   dm_data.FDQuery5.Close;
+   dm_data.FDQuery5.SQL.Text :=
+    'DELETE FROM `lista` WHERE titulo = :nombre';
+   dm_data.FDQuery5.ParamByName('nombre').AsString := Texto;
+   dm_data.FDQuery5.ExecSQL;
 
   SubItem := TMenuItem(MainMenu1.FindComponent('mnuAbrir'));
 
