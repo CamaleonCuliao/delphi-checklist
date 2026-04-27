@@ -41,7 +41,7 @@ object Form2: TForm2
         Top = 0
         Width = 849
         Height = 575
-        ActivePage = paginaIniciarSesion
+        ActivePage = paginaRegistrar
         Align = alClient
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
@@ -183,7 +183,7 @@ object Form2: TForm2
             Top = 360
             Width = 33
             Height = 29
-            OnClick = btnPasswordClick
+            OnClick = btnPasswordRegClick
           end
           object btnRegistrar: TSpeedButton
             Left = 283
