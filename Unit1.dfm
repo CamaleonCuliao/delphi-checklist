@@ -1,0 +1,74 @@
+object Form1: TForm1
+  Left = 0
+  Top = 0
+  Caption = 'Delphi Checklist'
+  ClientHeight = 688
+  ClientWidth = 1132
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -12
+  Font.Name = 'Segoe UI'
+  Font.Style = []
+  Menu = MainMenu1
+  OnCreate = FormCreate
+  TextHeight = 15
+  object DBGrid1: TDBGrid
+    Left = 712
+    Top = 64
+    Width = 320
+    Height = 120
+    TabOrder = 0
+    TitleFont.Charset = DEFAULT_CHARSET
+    TitleFont.Color = clWindowText
+    TitleFont.Height = -12
+    TitleFont.Name = 'Segoe UI'
+    TitleFont.Style = []
+  end
+  object Panel1: TPanel
+    Left = 16
+    Top = 8
+    Width = 625
+    Height = 657
+    Caption = 'Panel1'
+    Color = clBackground
+    ParentBackground = False
+    TabOrder = 1
+    object TreeView1: TTreeView
+      Left = 8
+      Top = 24
+      Width = 609
+      Height = 625
+      Indent = 19
+      PopupMenu = PopupMenu1
+      TabOrder = 0
+    end
+  end
+  object ToggleSwitch1: TToggleSwitch
+    Left = 712
+    Top = 32
+    Width = 131
+    Height = 20
+    StateCaptions.CaptionOn = 'Claro Activo'
+    StateCaptions.CaptionOff = 'Oscuro Activo'
+    TabOrder = 2
+    OnClick = ToggleSwitch1Click
+  end
+  object MainMenu1: TMainMenu
+    Left = 728
+    Top = 440
+  end
+  object PopupMenu1: TPopupMenu
+    Left = 800
+    Top = 440
+    object pmAnadir: TMenuItem
+      Caption = 'A'#241'adir'
+    end
+    object pmEliminar: TMenuItem
+      Caption = 'Eliminar'
+    end
+    object pmRenombrar: TMenuItem
+      Caption = 'Renombrar'
+    end
+  end
+end
