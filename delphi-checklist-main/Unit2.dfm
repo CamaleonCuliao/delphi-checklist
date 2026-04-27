@@ -1,7 +1,7 @@
 object Form2: TForm2
   Left = 0
   Top = 0
-  Caption = 'Form2'
+  Caption = 'Autenticaci'#243'n Usuario'
   ClientHeight = 575
   ClientWidth = 849
   Color = clBtnFace
@@ -41,7 +41,7 @@ object Form2: TForm2
         Top = 0
         Width = 849
         Height = 575
-        ActivePage = paginaRegistrar
+        ActivePage = paginaIniciarSesion
         Align = alClient
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
@@ -231,7 +231,7 @@ object Form2: TForm2
             TabOrder = 1
             TextHint = 'User123'
           end
-          object Edit1: TEdit
+          object editEmailReg: TEdit
             Left = 304
             Top = 265
             Width = 249

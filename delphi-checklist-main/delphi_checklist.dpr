@@ -2,6 +2,7 @@ program delphi_checklist;
 
 uses
   Vcl.Forms,
+  System.UITypes,
   Unit1 in 'Unit1.pas' {Form1},
   Vcl.Themes,
   Vcl.Styles,
@@ -17,5 +18,12 @@ begin
   Application.CreateForm(Tdm_data, dm_data);
   Application.CreateForm(TForm1, Form1);
   Application.CreateForm(TForm2, Form2);
-  Application.Run;
+
+  if Form2.ShowModal = mrOk then
+  begin
+    Form1.Show;
+    Application.Run;
+  end
+  else
+    Application.Terminate;
 end.
