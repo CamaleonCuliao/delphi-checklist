@@ -106,7 +106,7 @@ end;
 
 
 {
-  Insertar
+  Procedure insertar
 }
 procedure TForm1.insertarLista(nombre: String);
 var
@@ -179,6 +179,10 @@ begin
   TreeView1.FullExpand;
 end;
 
+
+{
+  Procedure recursiva que marca todos los hijos de un nodo
+}
 procedure MarcarHijosRecursivo(Nodo: TTreeNode; Marcado: Boolean; Query: TFDQuery);
 var
   Hijo: TTreeNode;
@@ -209,6 +213,11 @@ begin
   end;
 end;
 
+{
+  Procedure para marcar los hijos de la checkbox seleccionada por el usuario
+   Dependencias:
+   - MarcarHijosRecursivo()
+}
 procedure TForm1.TreeViewClick(Sender: TObject);
 var
   Nodo: TTreeNode;
@@ -231,6 +240,9 @@ begin
   MarcarHijosRecursivo(Nodo, Nodo.Checked, dm_data.FDQuery2);
 end;
 
+{
+  Estilo de la aplicacion
+}
 procedure TForm1.ToggleSwitch1Click(Sender: TObject);
 begin
   if ToggleSwitch1.State = tssOn then
