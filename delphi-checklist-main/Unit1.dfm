@@ -13,20 +13,6 @@ object Form1: TForm1
   Menu = MainMenu1
   OnCreate = FormCreate
   TextHeight = 15
-  object anadir: TSpeedButton
-    Left = 712
-    Top = 264
-    Width = 320
-    Height = 33
-    Caption = 'A'#241'adir'
-  end
-  object eliminar: TSpeedButton
-    Left = 712
-    Top = 360
-    Width = 320
-    Height = 33
-    Caption = 'Eliminar'
-  end
   object DBGrid1: TDBGrid
     Left = 712
     Top = 64
@@ -58,30 +44,14 @@ object Form1: TForm1
       TabOrder = 0
     end
   end
-  object crearlista: TBitBtn
-    Left = 712
-    Top = 24
-    Width = 121
-    Height = 25
-    Caption = 'Crear Lista'
-    TabOrder = 2
-  end
-  object borrarLista: TBitBtn
-    Left = 839
-    Top = 24
-    Width = 121
-    Height = 25
-    Caption = 'Borrar Lista'
-    TabOrder = 3
-  end
   object ToggleSwitch1: TToggleSwitch
-    Left = 984
-    Top = 29
+    Left = 712
+    Top = 32
     Width = 131
     Height = 20
     StateCaptions.CaptionOn = 'Claro Activo'
     StateCaptions.CaptionOff = 'Oscuro Activo'
-    TabOrder = 4
+    TabOrder = 2
     OnClick = ToggleSwitch1Click
   end
   object MainMenu1: TMainMenu
@@ -96,6 +66,9 @@ object Form1: TForm1
     end
     object pmEliminar: TMenuItem
       Caption = 'Eliminar'
+    end
+    object pmRenombrar: TMenuItem
+      Caption = 'Renombrar'
     end
   end
 end

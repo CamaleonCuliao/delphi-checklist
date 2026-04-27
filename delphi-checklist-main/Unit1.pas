@@ -17,15 +17,12 @@ type
     DBGrid1: TDBGrid;
     Panel1: TPanel;
     TreeView1: TTreeView;
-    anadir: TSpeedButton;
-    eliminar: TSpeedButton;
-    crearlista: TBitBtn;
-    borrarLista: TBitBtn;
     ToggleSwitch1: TToggleSwitch;
     MainMenu1: TMainMenu;
     PopupMenu1: TPopupMenu;
     pmAnadir: TMenuItem;
     pmEliminar: TMenuItem;
+    pmRenombrar: TMenuItem;
 
     procedure insertarLista(nombre: String);
     procedure AbrirListaClick(Sender: TObject);
@@ -35,6 +32,7 @@ type
     procedure TreeViewClick(Sender: TObject);
     procedure pmAnadirClick(Sender: TObject);
     procedure pmEliminarClick(Sender: TObject);
+    procedure pmRenombrarClick(Sender: TObject);
     procedure insertarNuevaLista(Sender: TObject);
     procedure TreeView1DragOver(Sender, Source: TObject; X, Y: Integer;
       State: TDragState; var Accept: Boolean);
@@ -103,6 +101,7 @@ begin
    TreeView1.PopupMenu   := PopupMenu1;
    pmAnadir.OnClick   := pmAnadirClick;
    pmEliminar.OnClick := pmEliminarClick;
+   pmRenombrar.OnClick := pmRenombrarClick;
 
    //Drag & Drop
    NodoArrastrado         := nil;
@@ -384,6 +383,36 @@ begin
 
   TreeView1.Items.Delete(NodoSeleccionado);//Eliminar nodo el TreeView (También sus hijos)
   NodoSeleccionado := nil;
+end;
+
+{
+ Procedure para renombrar el item seleccionado
+}
+procedure TForm1.pmRenombrarClick(Sender: TObject);
+var
+  TextoNuevo: string;
+  IdItem: Integer;
+begin
+  if NodoSeleccionado = nil then Exit;
+
+  IdItem := Integer(NodoSeleccionado.Data);
+
+  // InputBox para cambiar el texto
+  TextoNuevo := InputBox('Renombrar', 'Nuevo nombre: ', NodoSeleccionado.Text);
+
+  //Si no cambia nada o canceló, no hacer nada
+  if Trim(TextoNuevo) = '' then Exit;
+  if TextoNuevo = NodoSeleccionado.Text then Exit;
+
+  //Actualizar en BD
+  dm_data.FDQuery2.Close;
+  dm_data.FDQuery2.SQL.Text := 'UPDATE item SET texto = :texto WHERE id = :id';
+  dm_data.FDQuery2.ParamByName('texto').AsString := textoNuevo;
+  dm_data.FDQuery2.ParamByName('id').AsInteger := IdItem;
+  dm_data.FDQuery2.ExecSQL;
+  dm_data.FDQuery2.Close;
+
+  NodoSeleccionado.Text := TextoNuevo; //Actualizar en el TreeView
 end;
 
 {
