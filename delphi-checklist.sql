@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 24-04-2026 a las 09:36:00
+-- Tiempo de generación: 28-04-2026 a las 10:23:37
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -63,12 +63,13 @@ INSERT INTO `item` (`id`, `id_lista`, `id_item_padre`, `orden`, `texto`, `comple
 (3, 1, 1, 2, 'HTTP', 0, '2026-04-22 10:25:00', NULL),
 (6, 1, 1, 3, 'Models', 0, '2026-04-22 10:25:00', NULL),
 (7, 1, 1, 4, 'config', 0, '2026-04-22 10:25:00', NULL),
-(8, 1, 1, 5, 'database', 0, '2026-04-22 10:25:00', NULL),
-(9, 1, 1, 6, 'route', 0, '2026-04-22 10:25:00', NULL),
+(8, 1, 7, 1, 'database', 0, '2026-04-22 10:25:00', NULL),
+(9, 1, 8, 1, 'route', 0, '2026-04-22 10:25:00', NULL),
 (11, 1, 3, 1, 'Controllers', 0, '2026-04-22 10:25:00', NULL),
 (12, 1, 11, 1, 'ClienteController.php', 0, '2026-04-22 10:25:00', NULL),
 (13, 1, 11, 2, 'EntradaController.php', 0, '2026-04-22 10:25:00', NULL),
-(15, 1, 2, 0, 'Filtros', 0, '2026-04-23 12:43:51', NULL);
+(15, 1, 2, 0, 'Filtros', 0, '2026-04-23 12:43:51', NULL),
+(19, 1, 1, 5, 'Items', 0, '2026-04-24 11:42:16', NULL);
 
 -- --------------------------------------------------------
 
@@ -79,6 +80,7 @@ INSERT INTO `item` (`id`, `id_lista`, `id_item_padre`, `orden`, `texto`, `comple
 CREATE TABLE `lista` (
   `id` int(11) NOT NULL,
   `id_usuario` int(11) NOT NULL DEFAULT 1,
+  `id_proyecto` int(11) DEFAULT NULL,
   `titulo` varchar(255) NOT NULL,
   `descripcion` varchar(255) DEFAULT NULL,
   `fecha_creacion` datetime NOT NULL DEFAULT current_timestamp(),
@@ -89,8 +91,8 @@ CREATE TABLE `lista` (
 -- Volcado de datos para la tabla `lista`
 --
 
-INSERT INTO `lista` (`id`, `id_usuario`, `titulo`, `descripcion`, `fecha_creacion`, `ES_NOTA`) VALUES
-(1, 1, 'api', 'Estructura de datos de la API', '2026-04-22 10:25:00', 0);
+INSERT INTO `lista` (`id`, `id_usuario`, `id_proyecto`, `titulo`, `descripcion`, `fecha_creacion`, `ES_NOTA`) VALUES
+(1, 1, NULL, 'api', 'Estructura de datos de la API', '2026-04-22 10:25:00', 0);
 
 -- --------------------------------------------------------
 
@@ -102,6 +104,7 @@ CREATE TABLE `proyecto` (
   `id` int(11) NOT NULL,
   `id_usuario` int(11) NOT NULL,
   `nombre` varchar(150) NOT NULL,
+  `codigo` varchar(255) NOT NULL DEFAULT '',
   `descripcion` text DEFAULT NULL,
   `fecha_creacion` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -124,7 +127,22 @@ CREATE TABLE `usuarios` (
 --
 
 INSERT INTO `usuarios` (`id`, `nombre`, `email`, `contraseña`) VALUES
-(1, 'Admin', 'admin@cine.com', '1234');
+(1, 'Admin', 'admin@cine.com', '1234'),
+(2, 'Pau123', 'pau1@gmail.com', 'pau1234');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `usuario_proyecto`
+--
+
+CREATE TABLE `usuario_proyecto` (
+  `id` int(11) NOT NULL,
+  `id_usuario` int(11) NOT NULL,
+  `id_proyecto` int(11) NOT NULL,
+  `rol` varchar(20) NOT NULL DEFAULT 'miembro',
+  `fecha_union` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Índices para tablas volcadas
@@ -151,13 +169,15 @@ ALTER TABLE `item`
 --
 ALTER TABLE `lista`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `id_usuario` (`id_usuario`);
+  ADD KEY `id_usuario` (`id_usuario`),
+  ADD KEY `lista_ibfk_2` (`id_proyecto`);
 
 --
 -- Indices de la tabla `proyecto`
 --
 ALTER TABLE `proyecto`
   ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `codigo` (`codigo`),
   ADD KEY `id_usuario` (`id_usuario`);
 
 --
@@ -166,6 +186,14 @@ ALTER TABLE `proyecto`
 ALTER TABLE `usuarios`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `email` (`email`);
+
+--
+-- Indices de la tabla `usuario_proyecto`
+--
+ALTER TABLE `usuario_proyecto`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `usuario_proyecto_unico` (`id_usuario`,`id_proyecto`),
+  ADD KEY `up_ibfk_2` (`id_proyecto`);
 
 --
 -- AUTO_INCREMENT de las tablas volcadas
@@ -181,13 +209,13 @@ ALTER TABLE `historial`
 -- AUTO_INCREMENT de la tabla `item`
 --
 ALTER TABLE `item`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT de la tabla `lista`
 --
 ALTER TABLE `lista`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `proyecto`
@@ -199,7 +227,13 @@ ALTER TABLE `proyecto`
 -- AUTO_INCREMENT de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT de la tabla `usuario_proyecto`
+--
+ALTER TABLE `usuario_proyecto`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- Restricciones para tablas volcadas
@@ -223,13 +257,21 @@ ALTER TABLE `item`
 -- Filtros para la tabla `lista`
 --
 ALTER TABLE `lista`
-  ADD CONSTRAINT `lista_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+  ADD CONSTRAINT `lista_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `lista_ibfk_2` FOREIGN KEY (`id_proyecto`) REFERENCES `proyecto` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `proyecto`
 --
 ALTER TABLE `proyecto`
   ADD CONSTRAINT `proyecto_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Filtros para la tabla `usuario_proyecto`
+--
+ALTER TABLE `usuario_proyecto`
+  ADD CONSTRAINT `up_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `up_ibfk_2` FOREIGN KEY (`id_proyecto`) REFERENCES `proyecto` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
