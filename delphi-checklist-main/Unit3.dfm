@@ -30,7 +30,7 @@ object dm_data: Tdm_data
       end>
   end
   object DataSource1: TDataSource
-    DataSet = FDQuery1
+    DataSet = FDQuery6
     Left = 56
     Top = 176
   end

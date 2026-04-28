@@ -25,12 +25,12 @@ begin
 
   // 3) Crear el resto
   Application.CreateForm(TForm2, Form2);
-  Application.CreateForm(TForm4, Form4);
 
   // 4) Mostrar primero Form2 (login)
   if Form2.ShowModal = mrOk then
   begin
     // 5) Luego Form4
+    Application.CreateForm(TForm4, Form4);
     Form4.ShowModal;
 
     // 6) Por último Form1 (ya es MainForm)

@@ -1,16 +1,18 @@
 object Form4: TForm4
-  Left = 0
-  Top = 0
+  Left = 511
+  Top = 187
   BorderStyle = bsSingle
   Caption = 'Form4'
-  ClientHeight = 687
-  ClientWidth = 1070
+  ClientHeight = 647
+  ClientWidth = 1072
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -12
   Font.Name = 'Segoe UI'
   Font.Style = []
+  Position = poDesigned
+  OnCreate = FormCreate
   TextHeight = 15
   object Label1: TLabel
     Left = 204
@@ -211,6 +213,7 @@ object Form4: TForm4
     Top = 120
     Width = 641
     Height = 408
+    DataSource = dm_data.DataSource1
     TabOrder = 0
     TitleFont.Charset = DEFAULT_CHARSET
     TitleFont.Color = clWindowText
