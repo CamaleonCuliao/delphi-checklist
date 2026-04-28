@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 28-04-2026 a las 10:23:37
+-- Tiempo de generación: 28-04-2026 a las 12:59:09
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -92,7 +92,7 @@ CREATE TABLE `lista` (
 --
 
 INSERT INTO `lista` (`id`, `id_usuario`, `id_proyecto`, `titulo`, `descripcion`, `fecha_creacion`, `ES_NOTA`) VALUES
-(1, 1, NULL, 'api', 'Estructura de datos de la API', '2026-04-22 10:25:00', 0);
+(1, 1, 1, 'api', 'Estructura de datos de la API', '2026-04-22 10:25:00', 0);
 
 -- --------------------------------------------------------
 
@@ -105,9 +105,16 @@ CREATE TABLE `proyecto` (
   `id_usuario` int(11) NOT NULL,
   `nombre` varchar(150) NOT NULL,
   `codigo` varchar(255) NOT NULL DEFAULT '',
-  `descripcion` text DEFAULT NULL,
+  `descripcion` varchar(255) DEFAULT NULL,
   `fecha_creacion` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `proyecto`
+--
+
+INSERT INTO `proyecto` (`id`, `id_usuario`, `nombre`, `codigo`, `descripcion`, `fecha_creacion`) VALUES
+(1, 1, 'Cine', 'CINE01', 'Proyecto de la aplicación de Cine', '2026-04-28 12:40:03');
 
 -- --------------------------------------------------------
 
@@ -128,7 +135,8 @@ CREATE TABLE `usuarios` (
 
 INSERT INTO `usuarios` (`id`, `nombre`, `email`, `contraseña`) VALUES
 (1, 'Admin', 'admin@cine.com', '1234'),
-(2, 'Pau123', 'pau1@gmail.com', 'pau1234');
+(2, 'Pau123', 'pau1@gmail.com', 'pau1234'),
+(3, 'Borja123', 'borja@ejemplo.com', 'borja123');
 
 -- --------------------------------------------------------
 
@@ -143,6 +151,13 @@ CREATE TABLE `usuario_proyecto` (
   `rol` varchar(20) NOT NULL DEFAULT 'miembro',
   `fecha_union` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `usuario_proyecto`
+--
+
+INSERT INTO `usuario_proyecto` (`id`, `id_usuario`, `id_proyecto`, `rol`, `fecha_union`) VALUES
+(1, 1, 1, 'admin', '2026-04-28 12:40:03');
 
 --
 -- Índices para tablas volcadas
@@ -221,19 +236,19 @@ ALTER TABLE `lista`
 -- AUTO_INCREMENT de la tabla `proyecto`
 --
 ALTER TABLE `proyecto`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `usuario_proyecto`
 --
 ALTER TABLE `usuario_proyecto`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- Restricciones para tablas volcadas
@@ -277,4 +292,3 @@ COMMIT;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-
