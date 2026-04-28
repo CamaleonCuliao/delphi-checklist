@@ -220,5 +220,16 @@ object Form4: TForm4
     TitleFont.Height = -12
     TitleFont.Name = 'Segoe UI'
     TitleFont.Style = []
+    Columns = <
+      item
+        Expanded = False
+        Width = 147
+        Visible = True
+      end
+      item
+        Expanded = False
+        Width = 469
+        Visible = True
+      end>
   end
 end

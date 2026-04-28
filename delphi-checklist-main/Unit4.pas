@@ -1,4 +1,4 @@
-unit Unit4;
+﻿unit Unit4;
 
 interface
 
@@ -31,6 +31,7 @@ type
     Panel2: TPanel;
     btnCrearProyect: TSpeedButton;
     memoCrearDescripProyect: TMemo;
+
     procedure FormCreate(Sender: TObject);
   private
     procedure CargarProyectos;
@@ -45,13 +46,8 @@ implementation
 
 {$R *.dfm}
 
-{
-  Procedure que carga los proyectos del usuario actual en el DBGrid
-  - Consulta los proyectos asociados al usuario mediante usuario_proyecto
-}
 procedure TForm4.CargarProyectos;
 begin
-
   dm_data.FDQuery6.Close;
   dm_data.FDQuery6.SQL.Text :=
     'SELECT p.nombre, p.descripcion ' +
@@ -62,6 +58,11 @@ begin
   dm_data.FDQuery6.Open;
 
   DBGrid1.DataSource := dm_data.DataSource1;
+
+  DBGrid1.Columns[0].FieldName := 'nombre';
+  DBGrid1.Columns[1].FieldName := 'descripcion';
+
+
 end;
 
 procedure TForm4.FormCreate(Sender: TObject);
@@ -70,3 +71,4 @@ begin
 end;
 
 end.
+
