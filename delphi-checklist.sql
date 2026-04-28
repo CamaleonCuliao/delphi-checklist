@@ -20,7 +20,8 @@ SET time_zone = "+00:00";
 --
 -- Base de datos: `checklistdelphi`
 --
-
+create database checklistdelphi;
+use checklistdelphi;
 -- --------------------------------------------------------
 
 --
@@ -287,7 +288,11 @@ ALTER TABLE `proyecto`
 ALTER TABLE `usuario_proyecto`
   ADD CONSTRAINT `up_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `up_ibfk_2` FOREIGN KEY (`id_proyecto`) REFERENCES `proyecto` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+UPDATE lista SET id_proyecto = 1 WHERE titulo = 'api';
 COMMIT;
+
+
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
