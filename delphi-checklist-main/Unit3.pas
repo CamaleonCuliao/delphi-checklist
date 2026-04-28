@@ -19,6 +19,7 @@ type
     FDQuery3: TFDQuery;
     FDQuery4: TFDQuery;
     FDQuery5: TFDQuery;
+    FDQuery6: TFDQuery;
   private
     { Private declarations }
   public
@@ -27,11 +28,13 @@ type
 
 var
   dm_data: Tdm_data;
+  IdUsuarioActual: Integer = 0;
 
 implementation
 
 {%CLASSGROUP 'Vcl.Controls.TControl'}
 
 {$R *.dfm}
+
 
 end.

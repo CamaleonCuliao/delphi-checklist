@@ -219,6 +219,8 @@ begin
     Exit;
   end;
 
+  IdUsuarioActual := dm_data.FDQuery2.FieldByName('id').AsInteger; //Guardar en una variable el usuario para los proyectos
+
   dm_data.FDQuery2.Close;
 
   // Cerrar el modal con éxito

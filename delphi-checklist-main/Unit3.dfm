@@ -6,7 +6,6 @@ object dm_data: Tdm_data
       'User_Name=root'
       'Server=localhost'
       'Database=checklistdelphi'
-      'Port=3307'
       'DriverID=MySQL')
     Left = 56
     Top = 24
@@ -54,6 +53,11 @@ object dm_data: Tdm_data
     SQL.Strings = (
       '')
     Left = 352
+    Top = 96
+  end
+  object FDQuery6: TFDQuery
+    Connection = FDConnection1
+    Left = 424
     Top = 96
   end
 end
