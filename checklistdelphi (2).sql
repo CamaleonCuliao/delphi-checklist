@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 28-04-2026 a las 12:59:09
+-- Tiempo de generación: 29-04-2026 a las 16:06:52
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -20,8 +20,7 @@ SET time_zone = "+00:00";
 --
 -- Base de datos: `checklistdelphi`
 --
-create database checklistdelphi;
-use checklistdelphi;
+
 -- --------------------------------------------------------
 
 --
@@ -33,9 +32,21 @@ CREATE TABLE `historial` (
   `id_item` int(11) NOT NULL,
   `id_usuario` int(11) NOT NULL,
   `tipo_cambio` varchar(50) NOT NULL,
-  `dato_anterior` text DEFAULT NULL,
+  `dato_anterior` varchar(255) DEFAULT NULL,
   `fecha_cambio` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `historial`
+--
+
+INSERT INTO `historial` (`id`, `id_item`, `id_usuario`, `tipo_cambio`, `dato_anterior`, `fecha_cambio`) VALUES
+(1, 19, 1, 'COMPLETADO', 'False', '2026-04-29 15:59:12'),
+(6, 1, 1, 'COMPLETADO', 'False', '2026-04-29 16:01:19'),
+(7, 1, 1, 'COMPLETADO', 'False', '2026-04-29 16:01:20'),
+(8, 1, 1, 'COMPLETADO', 'True', '2026-04-29 16:01:21'),
+(9, 8, 1, 'COMPLETADO', 'False', '2026-04-29 16:01:28'),
+(10, 8, 1, 'COMPLETADO', 'True', '2026-04-29 16:01:29');
 
 -- --------------------------------------------------------
 
@@ -70,7 +81,10 @@ INSERT INTO `item` (`id`, `id_lista`, `id_item_padre`, `orden`, `texto`, `comple
 (12, 1, 11, 1, 'ClienteController.php', 0, '2026-04-22 10:25:00', NULL),
 (13, 1, 11, 2, 'EntradaController.php', 0, '2026-04-22 10:25:00', NULL),
 (15, 1, 2, 0, 'Filtros', 0, '2026-04-23 12:43:51', NULL),
-(19, 1, 1, 5, 'Items', 0, '2026-04-24 11:42:16', NULL);
+(19, 1, 1, 5, 'Items', 0, '2026-04-24 11:42:16', NULL),
+(25, 4, NULL, 0, 'raiz', 0, '2026-04-29 09:57:14', NULL),
+(26, 4, 25, 0, 'Ejemplo', 0, '2026-04-29 09:57:41', NULL),
+(27, 5, NULL, 0, 'raiz', 0, '2026-04-29 09:59:00', NULL);
 
 -- --------------------------------------------------------
 
@@ -93,7 +107,9 @@ CREATE TABLE `lista` (
 --
 
 INSERT INTO `lista` (`id`, `id_usuario`, `id_proyecto`, `titulo`, `descripcion`, `fecha_creacion`, `ES_NOTA`) VALUES
-(1, 1, 1, 'api', 'Estructura de datos de la API', '2026-04-22 10:25:00', 0);
+(1, 1, 1, 'api', 'Estructura de datos de la API', '2026-04-22 10:25:00', 0),
+(4, 1, 1, 'Hola', 'Ejemplo', '2026-04-29 09:57:14', 0),
+(5, 3, 2, 'Ejemplo', 'Ejemplo', '2026-04-29 09:59:00', 0);
 
 -- --------------------------------------------------------
 
@@ -115,7 +131,8 @@ CREATE TABLE `proyecto` (
 --
 
 INSERT INTO `proyecto` (`id`, `id_usuario`, `nombre`, `codigo`, `descripcion`, `fecha_creacion`) VALUES
-(1, 1, 'Cine', 'CINE01', 'Proyecto de la aplicación de Cine', '2026-04-28 12:40:03');
+(1, 1, 'Cine', 'CINE01', 'Proyecto de la aplicación de Cine', '2026-04-28 12:40:03'),
+(2, 3, 'Ejemplo', 'EJEMPLO01', 'Proyecto de Ejemplo', '2026-04-29 09:58:48');
 
 -- --------------------------------------------------------
 
@@ -158,7 +175,8 @@ CREATE TABLE `usuario_proyecto` (
 --
 
 INSERT INTO `usuario_proyecto` (`id`, `id_usuario`, `id_proyecto`, `rol`, `fecha_union`) VALUES
-(1, 1, 1, 'admin', '2026-04-28 12:40:03');
+(1, 1, 1, 'admin', '2026-04-28 12:40:03'),
+(2, 3, 2, 'admin', '2026-04-29 09:58:48');
 
 --
 -- Índices para tablas volcadas
@@ -219,25 +237,25 @@ ALTER TABLE `usuario_proyecto`
 -- AUTO_INCREMENT de la tabla `historial`
 --
 ALTER TABLE `historial`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT de la tabla `item`
 --
 ALTER TABLE `item`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
 
 --
 -- AUTO_INCREMENT de la tabla `lista`
 --
 ALTER TABLE `lista`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT de la tabla `proyecto`
 --
 ALTER TABLE `proyecto`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de la tabla `usuarios`
@@ -249,7 +267,7 @@ ALTER TABLE `usuarios`
 -- AUTO_INCREMENT de la tabla `usuario_proyecto`
 --
 ALTER TABLE `usuario_proyecto`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- Restricciones para tablas volcadas
@@ -288,11 +306,7 @@ ALTER TABLE `proyecto`
 ALTER TABLE `usuario_proyecto`
   ADD CONSTRAINT `up_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `up_ibfk_2` FOREIGN KEY (`id_proyecto`) REFERENCES `proyecto` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
-UPDATE lista SET id_proyecto = 1 WHERE titulo = 'api';
 COMMIT;
-
-
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
