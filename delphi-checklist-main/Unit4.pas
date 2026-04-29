@@ -1,4 +1,4 @@
-unit Unit4;
+Ôªøunit Unit4;
 
 interface
 
@@ -18,7 +18,7 @@ type
     pageUnirProyec: TTabSheet;
     pageCrearProyect: TTabSheet;
     Panel1: TPanel;
-    SpeedButton1: TSpeedButton;
+    btnUnirAcceder: TSpeedButton;
     Label2: TLabel;
     editUnirNombreProyect: TEdit;
     Label3: TLabel;
@@ -34,8 +34,9 @@ type
 
     procedure FormCreate(Sender: TObject);
     procedure btnCrearProyectoClick(Sender: TObject);
-    procedure SpeedButton1Click(Sender: TObject);
+    procedure btnUnirAccederClick(Sender: TObject);
     procedure btnAccederClick(Sender: TObject);
+    procedure btnBorrarProyectClick(Sender: TObject);
   private
     procedure CargarProyectos;
   public
@@ -65,7 +66,6 @@ begin
   DBGrid1.Columns[0].FieldName := 'nombre';
   DBGrid1.Columns[1].FieldName := 'descripcion';
 
-
 end;
 
 procedure TForm4.FormCreate(Sender: TObject);
@@ -73,12 +73,67 @@ begin
   CargarProyectos;
 end;
 
+procedure TForm4.btnBorrarProyectClick(Sender: TObject);
+var
+  idProyecto: Integer;
+  totalUsuarios: Integer;
+begin
+  // 1. Verificar que hay un proyecto seleccionado
+  if dm_data.FDQuery6.IsEmpty then
+  begin
+    ShowMessage('Selecciona un proyecto del listado primero');
+    Exit;
+  end;
+
+  // 2. Obtener el ID del proyecto seleccionado en el grid
+  idProyecto := dm_data.FDQuery6.FieldByName('id').AsInteger;
+
+  // 3. Contar cu√°ntos usuarios tiene el proyecto
+  dm_data.FDQuery6.Close;
+  dm_data.FDQuery6.SQL.Text :=
+    'SELECT COUNT(*) AS total_usuarios ' +
+    'FROM usuario_proyecto ' +
+    'WHERE id_proyecto = :idp';
+  dm_data.FDQuery6.ParamByName('idp').AsInteger := idProyecto;
+  dm_data.FDQuery6.Open;
+
+  totalUsuarios := dm_data.FDQuery6.FieldByName('total_usuarios').AsInteger;
+  dm_data.FDQuery6.Close;
+
+  // 4. Si solo hay un usuario ‚Üí borrar proyecto entero
+  if totalUsuarios = 1 then
+  begin
+    dm_data.FDQuery6.SQL.Text :=
+      'DELETE FROM proyecto WHERE id = :idp';
+    dm_data.FDQuery6.ParamByName('idp').AsInteger := idProyecto;
+    dm_data.FDQuery6.ExecSQL;
+
+    ShowMessage('Proyecto eliminado completamente.');
+  end
+  else
+  begin
+    // 5. Si hay m√°s usuarios ‚Üí borrar solo la relaci√≥n del usuario actual
+    dm_data.FDQuery6.SQL.Text :=
+      'DELETE FROM usuario_proyecto ' +
+      'WHERE id_usuario = :idu AND id_proyecto = :idp';
+    dm_data.FDQuery6.ParamByName('idu').AsInteger := IdUsuarioActual;
+    dm_data.FDQuery6.ParamByName('idp').AsInteger := idProyecto;
+    dm_data.FDQuery6.ExecSQL;
+
+    ShowMessage('Has salido del proyecto, pero este sigue existiendo.');
+  end;
+
+  // 6. Recargar el grid
+  CargarProyectos;
+end;
+
 {
-  Procedure que crea un nuevo proyecto y aÒade al usuario como administrador
-    - Valida que nombre y cÛdigo no estÈn vacÌos
-    - AÒade al usuario actual como admin en usuario_proyecto
+  Procedure que crea un nuevo proyecto y a√±ade al usuario como administrador
+    - Valida que nombre y c√≥digo no est√©n vac√≠os
+    - A√±ade al usuario actual como admin en usuario_proyecto
     - Recarga el grid con los proyectos actualizados
 }
+
 procedure TForm4.btnCrearProyectoClick(Sender: TObject);
 var
   Nombre, Codigo, Descripcion: String;
@@ -89,7 +144,7 @@ begin
 
   if (Trim(Nombre) = '') or (Trim(Codigo) = '') then
   begin
-    ShowMessage('Nombre y cÛdigo son obligatorios');
+    ShowMessage('Nombre y c√≥digo son obligatorios');
     Exit;
   end;
 
@@ -104,7 +159,7 @@ begin
   dm_data.FDQuery6.ParamByName('descripcion').AsString  := Descripcion;
   dm_data.FDQuery6.ExecSQL;
 
-  // AÒadir al creador como admin en usuario_proyecto
+  // A√±adir al creador como admin en usuario_proyecto
   dm_data.FDQuery6.SQL.Text :=
     'INSERT INTO usuario_proyecto (id_usuario, id_proyecto, rol) ' +
     'VALUES (:id_usuario, LAST_INSERT_ID(), ''admin'')';
@@ -123,14 +178,14 @@ begin
 end;
 
 {
-  Procedure que une al usuario actual a un proyecto mediante su cÛdig
-    - Valida que el cÛdigo no estÈ vacÌo
-    - Busca el proyecto por cÛdigo en la BD
+  Procedure que une al usuario actual a un proyecto mediante su c√≥dig
+    - Valida que el c√≥digo no est√© vac√≠o
+    - Busca el proyecto por c√≥digo en la BD
     - Comprueba que el proyecto existe
-    - Inserta la relaciÛn en usuario_proyecto como miembro
+    - Inserta la relaci√≥n en usuario_proyecto como miembro
     - Recarga el grid con los proyectos actualizados
 }
-procedure TForm4.SpeedButton1Click(Sender: TObject);
+procedure TForm4.btnUnirAccederClick(Sender: TObject);
 var
   Codigo: String;
   IdProyecto: Integer;
@@ -139,11 +194,11 @@ begin
 
   if Trim(Codigo) = '' then
   begin
-    ShowMessage('Introduce el cÛdigo del proyecto');
+    ShowMessage('Introduce el c√≥digo del proyecto');
     Exit;
   end;
 
-  // Buscar proyecto por cÛdigo
+  // Buscar proyecto por c√≥digo
   dm_data.FDQuery6.Close;
   dm_data.FDQuery6.SQL.Text :=
     'SELECT id FROM proyecto WHERE codigo = :codigo';
@@ -152,7 +207,7 @@ begin
 
   if dm_data.FDQuery6.IsEmpty then
   begin
-    ShowMessage('CÛdigo de proyecto no encontrado');
+    ShowMessage('C√≥digo de proyecto no encontrado');
     dm_data.FDQuery6.Close;
     CargarProyectos;
     Exit;
@@ -189,7 +244,7 @@ begin
     Exit;
   end;
 
-  // Necesitamos el id del proyecto, aÒadirlo a la query de CargarProyectos
+  // Necesitamos el id del proyecto, a√±adirlo a la query de CargarProyectos
   IdProyectoActual := dm_data.FDQuery6.FieldByName('id').AsInteger;
   ModalResult := mrOk;
 end;

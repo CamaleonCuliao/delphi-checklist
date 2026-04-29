@@ -53,13 +53,14 @@ object Form4: TForm4
     Font.Name = 'Segoe UI Variable Small'
     Font.Style = []
     ParentFont = False
+    OnClick = btnBorrarProyectClick
   end
   object PageControl1: TPageControl
     Left = 736
     Top = 149
     Width = 310
     Height = 336
-    ActivePage = pageUnirProyec
+    ActivePage = pageCrearProyect
     TabOrder = 1
     object pageUnirProyec: TTabSheet
       Caption = 'Unete a un Nuevo Proyecto'
@@ -95,7 +96,7 @@ object Form4: TForm4
         Width = 229
         Height = 73
         TabOrder = 0
-        object SpeedButton1: TSpeedButton
+        object btnUnirAcceder: TSpeedButton
           Left = -23
           Top = 0
           Width = 276
@@ -107,7 +108,7 @@ object Form4: TForm4
           Font.Name = 'Segoe UI Variable Small'
           Font.Style = []
           ParentFont = False
-          OnClick = SpeedButton1Click
+          OnClick = btnUnirAccederClick
         end
       end
       object editUnirNombreProyect: TEdit
@@ -231,7 +232,7 @@ object Form4: TForm4
       end
       item
         Expanded = False
-        Width = 469
+        Width = 447
         Visible = True
       end>
   end
