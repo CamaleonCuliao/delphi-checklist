@@ -29,6 +29,7 @@ type
 var
   dm_data: Tdm_data;
   IdUsuarioActual: Integer = 0;
+  IdListaActual: Integer = 0;
 
 implementation
 
