@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 29-04-2026 a las 16:06:52
+-- Tiempo de generación: 30-04-2026 a las 12:18:56
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -29,7 +29,8 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `historial` (
   `id` int(11) NOT NULL,
-  `id_item` int(11) NOT NULL,
+  `id_item` int(11) DEFAULT NULL,
+  `id_lista` int(11) DEFAULT NULL,
   `id_usuario` int(11) NOT NULL,
   `tipo_cambio` varchar(50) NOT NULL,
   `dato_anterior` varchar(255) DEFAULT NULL,
@@ -40,13 +41,26 @@ CREATE TABLE `historial` (
 -- Volcado de datos para la tabla `historial`
 --
 
-INSERT INTO `historial` (`id`, `id_item`, `id_usuario`, `tipo_cambio`, `dato_anterior`, `fecha_cambio`) VALUES
-(1, 19, 1, 'COMPLETADO', 'False', '2026-04-29 15:59:12'),
-(6, 1, 1, 'COMPLETADO', 'False', '2026-04-29 16:01:19'),
-(7, 1, 1, 'COMPLETADO', 'False', '2026-04-29 16:01:20'),
-(8, 1, 1, 'COMPLETADO', 'True', '2026-04-29 16:01:21'),
-(9, 8, 1, 'COMPLETADO', 'False', '2026-04-29 16:01:28'),
-(10, 8, 1, 'COMPLETADO', 'True', '2026-04-29 16:01:29');
+INSERT INTO `historial` (`id`, `id_item`, `id_lista`, `id_usuario`, `tipo_cambio`, `dato_anterior`, `fecha_cambio`) VALUES
+(1, 19, NULL, 1, 'COMPLETADO', 'False', '2026-04-29 15:59:12'),
+(6, 1, NULL, 1, 'COMPLETADO', 'False', '2026-04-29 16:01:19'),
+(7, 1, NULL, 1, 'COMPLETADO', 'False', '2026-04-29 16:01:20'),
+(8, 1, NULL, 1, 'COMPLETADO', 'True', '2026-04-29 16:01:21'),
+(9, 8, NULL, 1, 'COMPLETADO', 'False', '2026-04-29 16:01:28'),
+(10, 8, NULL, 1, 'COMPLETADO', 'True', '2026-04-29 16:01:29'),
+(14, 8, NULL, 1, 'TEXTO', 'database', '2026-04-29 16:08:20'),
+(15, 9, NULL, 1, 'COMPLETADO', 'False', '2026-04-29 16:08:22'),
+(16, 9, NULL, 1, 'COMPLETADO', 'True', '2026-04-29 16:08:23'),
+(17, 7, NULL, 1, 'COMPLETADO', 'True', '2026-04-29 16:08:24'),
+(18, 12, NULL, 1, 'TEXTO', 'ClienteController.php', '2026-04-29 16:10:29'),
+(26, 19, NULL, 1, 'COMPLETADO', 'False', '2026-04-30 10:31:00'),
+(27, 19, NULL, 1, 'COMPLETADO', 'True', '2026-04-30 10:31:03'),
+(28, 1, NULL, 1, 'COMPLETADO', 'False', '2026-04-30 10:41:38'),
+(29, 1, NULL, 1, 'COMPLETADO', 'True', '2026-04-30 10:41:39'),
+(30, NULL, 1, 1, 'CREADO', '', '2026-04-30 12:15:59'),
+(31, NULL, 1, 1, 'BORRADO', 'Ejemplo', '2026-04-30 12:16:07'),
+(32, NULL, 1, 1, 'CREADO', '', '2026-04-30 12:17:18'),
+(33, NULL, 1, 1, 'BORRADO', 'Ejemplo 2', '2026-04-30 12:17:27');
 
 -- --------------------------------------------------------
 
@@ -75,10 +89,10 @@ INSERT INTO `item` (`id`, `id_lista`, `id_item_padre`, `orden`, `texto`, `comple
 (3, 1, 1, 2, 'HTTP', 0, '2026-04-22 10:25:00', NULL),
 (6, 1, 1, 3, 'Models', 0, '2026-04-22 10:25:00', NULL),
 (7, 1, 1, 4, 'config', 0, '2026-04-22 10:25:00', NULL),
-(8, 1, 7, 1, 'database', 0, '2026-04-22 10:25:00', NULL),
+(8, 1, 7, 1, 'DB', 0, '2026-04-22 10:25:00', NULL),
 (9, 1, 8, 1, 'route', 0, '2026-04-22 10:25:00', NULL),
 (11, 1, 3, 1, 'Controllers', 0, '2026-04-22 10:25:00', NULL),
-(12, 1, 11, 1, 'ClienteController.php', 0, '2026-04-22 10:25:00', NULL),
+(12, 1, 11, 1, 'ClienteController2.php', 0, '2026-04-22 10:25:00', NULL),
 (13, 1, 11, 2, 'EntradaController.php', 0, '2026-04-22 10:25:00', NULL),
 (15, 1, 2, 0, 'Filtros', 0, '2026-04-23 12:43:51', NULL),
 (19, 1, 1, 5, 'Items', 0, '2026-04-24 11:42:16', NULL),
@@ -188,7 +202,8 @@ INSERT INTO `usuario_proyecto` (`id`, `id_usuario`, `id_proyecto`, `rol`, `fecha
 ALTER TABLE `historial`
   ADD PRIMARY KEY (`id`),
   ADD KEY `id_item` (`id_item`),
-  ADD KEY `id_usuario` (`id_usuario`);
+  ADD KEY `id_usuario` (`id_usuario`),
+  ADD KEY `historial_ibfk_3` (`id_lista`);
 
 --
 -- Indices de la tabla `item`
@@ -237,13 +252,13 @@ ALTER TABLE `usuario_proyecto`
 -- AUTO_INCREMENT de la tabla `historial`
 --
 ALTER TABLE `historial`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
 
 --
 -- AUTO_INCREMENT de la tabla `item`
 --
 ALTER TABLE `item`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
 
 --
 -- AUTO_INCREMENT de la tabla `lista`
@@ -277,8 +292,9 @@ ALTER TABLE `usuario_proyecto`
 -- Filtros para la tabla `historial`
 --
 ALTER TABLE `historial`
-  ADD CONSTRAINT `historial_ibfk_1` FOREIGN KEY (`id_item`) REFERENCES `item` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `historial_ibfk_2` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+  ADD CONSTRAINT `historial_ibfk_1` FOREIGN KEY (`id_item`) REFERENCES `item` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `historial_ibfk_2` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `historial_ibfk_3` FOREIGN KEY (`id_lista`) REFERENCES `lista` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `item`
