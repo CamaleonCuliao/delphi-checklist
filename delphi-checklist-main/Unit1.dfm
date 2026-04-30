@@ -3,7 +3,7 @@ object Form1: TForm1
   Top = 0
   Caption = 'Delphi Checklist'
   ClientHeight = 688
-  ClientWidth = 1088
+  ClientWidth = 1299
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -16,14 +16,40 @@ object Form1: TForm1
   object DBGrid1: TDBGrid
     Left = 680
     Top = 58
-    Width = 385
-    Height = 217
+    Width = 611
+    Height = 383
     TabOrder = 0
     TitleFont.Charset = DEFAULT_CHARSET
     TitleFont.Color = clWindowText
     TitleFont.Height = -12
     TitleFont.Name = 'Segoe UI'
     TitleFont.Style = []
+    Columns = <
+      item
+        Expanded = False
+        Width = 102
+        Visible = True
+      end
+      item
+        Expanded = False
+        Width = 119
+        Visible = True
+      end
+      item
+        Expanded = False
+        Width = 89
+        Visible = True
+      end
+      item
+        Expanded = False
+        Width = 102
+        Visible = True
+      end
+      item
+        Expanded = False
+        Width = 107
+        Visible = True
+      end>
   end
   object Panel1: TPanel
     Left = 16
@@ -54,13 +80,21 @@ object Form1: TForm1
     TabOrder = 2
     OnClick = ToggleSwitch1Click
   end
+  object ListBox1: TListBox
+    Left = 680
+    Top = 568
+    Width = 611
+    Height = 97
+    ItemHeight = 15
+    TabOrder = 3
+  end
   object MainMenu1: TMainMenu
-    Left = 672
-    Top = 416
+    Left = 776
+    Top = 512
   end
   object PopupMenu1: TPopupMenu
-    Left = 672
-    Top = 464
+    Left = 864
+    Top = 512
     object pmAnadir: TMenuItem
       Caption = 'A'#241'adir'
     end
