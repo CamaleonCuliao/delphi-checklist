@@ -170,12 +170,51 @@ begin
   Email    := editEmailReg.Text;
   Password := editPasswordReg.Text;
 
+  // Validar campos vacíps
   if (Trim(Nombre) = '') or (Trim(Email) = '') or (Trim(Password) = '') then
   begin
     ShowMessage('Rellena todos los campos');
     Exit;
   end;
 
+  // Validar longitud mínima del nombre
+  if Length(Nombre) < 3 then
+  begin
+    ShowMessage('El nombre debe tener al menos 3 caracteres');
+    Exit;
+  end;
+
+  // Validar formato básico del email
+  if (Pos('@', Email) = 0) or (Pos('.', Email) = 0) then
+  begin
+    ShowMessage('El email no tiene un formato válido');
+    Exit;
+  end;
+
+  // Validar longitud mínima de contraseña
+  if Length(Password) < 8 then
+  begin
+    ShowMessage('La contraseña debe tener al menos 8 caracteres');
+    Exit;
+  end;
+
+  // Verificar que el email no esté ya registrado
+  dm_data.FDConnection1.Connected := True;
+  dm_data.FDQuery2.Close;
+  dm_data.FDQuery2.SQL.Text :=
+    'SELECT id FROM usuarios WHERE email = :email';
+  dm_data.FDQuery2.ParamByName('email').AsString := Email;
+  dm_data.FDQuery2.Open;
+
+  if not dm_data.FDQuery2.IsEmpty then
+  begin
+    ShowMessage('Este email ya está registrado');
+    dm_data.FDQuery2.Close;
+    Exit;
+  end;
+  dm_data.FDQuery2.Close;
+
+  //Insertar nuevo usuario
   dm_data.FDConnection1.Connected := True;
   dm_data.FDQuery2.Close;
   dm_data.FDQuery2.SQL.Text :=
