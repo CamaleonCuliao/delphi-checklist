@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 28-04-2026 a las 12:59:09
+-- Tiempo de generación: 30-04-2026 a las 12:18:56
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -29,12 +29,38 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `historial` (
   `id` int(11) NOT NULL,
-  `id_item` int(11) NOT NULL,
+  `id_item` int(11) DEFAULT NULL,
+  `id_lista` int(11) DEFAULT NULL,
   `id_usuario` int(11) NOT NULL,
   `tipo_cambio` varchar(50) NOT NULL,
-  `dato_anterior` text DEFAULT NULL,
+  `dato_anterior` varchar(255) DEFAULT NULL,
   `fecha_cambio` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `historial`
+--
+
+INSERT INTO `historial` (`id`, `id_item`, `id_lista`, `id_usuario`, `tipo_cambio`, `dato_anterior`, `fecha_cambio`) VALUES
+(1, 19, NULL, 1, 'COMPLETADO', 'False', '2026-04-29 15:59:12'),
+(6, 1, NULL, 1, 'COMPLETADO', 'False', '2026-04-29 16:01:19'),
+(7, 1, NULL, 1, 'COMPLETADO', 'False', '2026-04-29 16:01:20'),
+(8, 1, NULL, 1, 'COMPLETADO', 'True', '2026-04-29 16:01:21'),
+(9, 8, NULL, 1, 'COMPLETADO', 'False', '2026-04-29 16:01:28'),
+(10, 8, NULL, 1, 'COMPLETADO', 'True', '2026-04-29 16:01:29'),
+(14, 8, NULL, 1, 'TEXTO', 'database', '2026-04-29 16:08:20'),
+(15, 9, NULL, 1, 'COMPLETADO', 'False', '2026-04-29 16:08:22'),
+(16, 9, NULL, 1, 'COMPLETADO', 'True', '2026-04-29 16:08:23'),
+(17, 7, NULL, 1, 'COMPLETADO', 'True', '2026-04-29 16:08:24'),
+(18, 12, NULL, 1, 'TEXTO', 'ClienteController.php', '2026-04-29 16:10:29'),
+(26, 19, NULL, 1, 'COMPLETADO', 'False', '2026-04-30 10:31:00'),
+(27, 19, NULL, 1, 'COMPLETADO', 'True', '2026-04-30 10:31:03'),
+(28, 1, NULL, 1, 'COMPLETADO', 'False', '2026-04-30 10:41:38'),
+(29, 1, NULL, 1, 'COMPLETADO', 'True', '2026-04-30 10:41:39'),
+(30, NULL, 1, 1, 'CREADO', '', '2026-04-30 12:15:59'),
+(31, NULL, 1, 1, 'BORRADO', 'Ejemplo', '2026-04-30 12:16:07'),
+(32, NULL, 1, 1, 'CREADO', '', '2026-04-30 12:17:18'),
+(33, NULL, 1, 1, 'BORRADO', 'Ejemplo 2', '2026-04-30 12:17:27');
 
 -- --------------------------------------------------------
 
@@ -63,13 +89,16 @@ INSERT INTO `item` (`id`, `id_lista`, `id_item_padre`, `orden`, `texto`, `comple
 (3, 1, 1, 2, 'HTTP', 0, '2026-04-22 10:25:00', NULL),
 (6, 1, 1, 3, 'Models', 0, '2026-04-22 10:25:00', NULL),
 (7, 1, 1, 4, 'config', 0, '2026-04-22 10:25:00', NULL),
-(8, 1, 7, 1, 'database', 0, '2026-04-22 10:25:00', NULL),
+(8, 1, 7, 1, 'DB', 0, '2026-04-22 10:25:00', NULL),
 (9, 1, 8, 1, 'route', 0, '2026-04-22 10:25:00', NULL),
 (11, 1, 3, 1, 'Controllers', 0, '2026-04-22 10:25:00', NULL),
-(12, 1, 11, 1, 'ClienteController.php', 0, '2026-04-22 10:25:00', NULL),
+(12, 1, 11, 1, 'ClienteController2.php', 0, '2026-04-22 10:25:00', NULL),
 (13, 1, 11, 2, 'EntradaController.php', 0, '2026-04-22 10:25:00', NULL),
 (15, 1, 2, 0, 'Filtros', 0, '2026-04-23 12:43:51', NULL),
-(19, 1, 1, 5, 'Items', 0, '2026-04-24 11:42:16', NULL);
+(19, 1, 1, 5, 'Items', 0, '2026-04-24 11:42:16', NULL),
+(25, 4, NULL, 0, 'raiz', 0, '2026-04-29 09:57:14', NULL),
+(26, 4, 25, 0, 'Ejemplo', 0, '2026-04-29 09:57:41', NULL),
+(27, 5, NULL, 0, 'raiz', 0, '2026-04-29 09:59:00', NULL);
 
 -- --------------------------------------------------------
 
@@ -92,7 +121,9 @@ CREATE TABLE `lista` (
 --
 
 INSERT INTO `lista` (`id`, `id_usuario`, `id_proyecto`, `titulo`, `descripcion`, `fecha_creacion`, `ES_NOTA`) VALUES
-(1, 1, 1, 'api', 'Estructura de datos de la API', '2026-04-22 10:25:00', 0);
+(1, 1, 1, 'api', 'Estructura de datos de la API', '2026-04-22 10:25:00', 0),
+(4, 1, 1, 'Hola', 'Ejemplo', '2026-04-29 09:57:14', 0),
+(5, 3, 2, 'Ejemplo', 'Ejemplo', '2026-04-29 09:59:00', 0);
 
 -- --------------------------------------------------------
 
@@ -114,7 +145,8 @@ CREATE TABLE `proyecto` (
 --
 
 INSERT INTO `proyecto` (`id`, `id_usuario`, `nombre`, `codigo`, `descripcion`, `fecha_creacion`) VALUES
-(1, 1, 'Cine', 'CINE01', 'Proyecto de la aplicación de Cine', '2026-04-28 12:40:03');
+(1, 1, 'Cine', 'CINE01', 'Proyecto de la aplicación de Cine', '2026-04-28 12:40:03'),
+(2, 3, 'Ejemplo', 'EJEMPLO01', 'Proyecto de Ejemplo', '2026-04-29 09:58:48');
 
 -- --------------------------------------------------------
 
@@ -157,7 +189,8 @@ CREATE TABLE `usuario_proyecto` (
 --
 
 INSERT INTO `usuario_proyecto` (`id`, `id_usuario`, `id_proyecto`, `rol`, `fecha_union`) VALUES
-(1, 1, 1, 'admin', '2026-04-28 12:40:03');
+(1, 1, 1, 'admin', '2026-04-28 12:40:03'),
+(2, 3, 2, 'admin', '2026-04-29 09:58:48');
 
 --
 -- Índices para tablas volcadas
@@ -169,7 +202,8 @@ INSERT INTO `usuario_proyecto` (`id`, `id_usuario`, `id_proyecto`, `rol`, `fecha
 ALTER TABLE `historial`
   ADD PRIMARY KEY (`id`),
   ADD KEY `id_item` (`id_item`),
-  ADD KEY `id_usuario` (`id_usuario`);
+  ADD KEY `id_usuario` (`id_usuario`),
+  ADD KEY `historial_ibfk_3` (`id_lista`);
 
 --
 -- Indices de la tabla `item`
@@ -218,25 +252,25 @@ ALTER TABLE `usuario_proyecto`
 -- AUTO_INCREMENT de la tabla `historial`
 --
 ALTER TABLE `historial`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
 
 --
 -- AUTO_INCREMENT de la tabla `item`
 --
 ALTER TABLE `item`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
 
 --
 -- AUTO_INCREMENT de la tabla `lista`
 --
 ALTER TABLE `lista`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT de la tabla `proyecto`
 --
 ALTER TABLE `proyecto`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de la tabla `usuarios`
@@ -248,7 +282,7 @@ ALTER TABLE `usuarios`
 -- AUTO_INCREMENT de la tabla `usuario_proyecto`
 --
 ALTER TABLE `usuario_proyecto`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- Restricciones para tablas volcadas
@@ -258,8 +292,9 @@ ALTER TABLE `usuario_proyecto`
 -- Filtros para la tabla `historial`
 --
 ALTER TABLE `historial`
-  ADD CONSTRAINT `historial_ibfk_1` FOREIGN KEY (`id_item`) REFERENCES `item` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `historial_ibfk_2` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+  ADD CONSTRAINT `historial_ibfk_1` FOREIGN KEY (`id_item`) REFERENCES `item` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `historial_ibfk_2` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `historial_ibfk_3` FOREIGN KEY (`id_lista`) REFERENCES `lista` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `item`

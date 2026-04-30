@@ -3,8 +3,10 @@
 interface
 
 uses
-  Unit3, Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.CheckLst, Vcl.ComCtrls,
+  Unit3, Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
+  System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.CheckLst,
+  Vcl.ComCtrls,
   Vcl.Menus, FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Error,
   FireDAC.UI.Intf, FireDAC.Phys.Intf, FireDAC.Stan.Def, FireDAC.Stan.Pool,
   FireDAC.Stan.Async, FireDAC.Phys, FireDAC.VCLUI.Wait, Data.DB,
@@ -24,6 +26,7 @@ type
     pmAnadir: TMenuItem;
     pmEliminar: TMenuItem;
     pmRenombrar: TMenuItem;
+    ListBox1: TListBox;
     procedure insertarLista(nombre: String);
     procedure AbrirListaClick(Sender: TObject);
     procedure mostrarListasCreadas(SubMenuItem: TMenuItem);
@@ -40,11 +43,14 @@ type
     procedure TreeViewMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
     procedure borrarListaFunction(Sender: TObject);
+    procedure RegistrarHistorial(IdItem: Integer; TipoCambio: String;
+      DatoAnterior: String);
+    procedure TreeView1Change(Sender: TObject; Node: TTreeNode);
   private
     NodoSeleccionado: TTreeNode;
     NodoArrastrado: TTreeNode;
   public
-    { Public declarations }
+    procedure RecargarMenuListas;
   end;
 
 var
@@ -53,24 +59,30 @@ var
 implementation
 
 uses
-  Unit2;
+  Unit2, Unit4;
 
 {$R *.dfm}
 
 procedure TForm1.FormCreate(Sender: TObject);
 var
-  i: Integer;
-  NodoPadre, NodoHijo: TTreeNode;
   MenuItem: TMenuItem;
   SubMenuItem: TMenuItem;
-  SubListaItem: TMenuItem;
 begin
   Self.Menu := MainMenu1;
   dm_data.FDConnection1.Connected := True;
   WindowState := wsMaximized;
 
-  insertarLista('api');
   TreeView1.OnClick := TreeViewClick;
+  TreeView1.OnMouseDown := TreeViewMouseDown;
+  TreeView1.PopupMenu := PopupMenu1;
+  pmAnadir.OnClick := pmAnadirClick;
+  pmEliminar.OnClick := pmEliminarClick;
+  pmRenombrar.OnClick := pmRenombrarClick;
+  NodoSeleccionado := nil;
+  NodoArrastrado := nil;
+  TreeView1.DragMode := dmAutomatic;
+  TreeView1.OnDragOver := TreeView1DragOver;
+  TreeView1.OnDragDrop := TreeView1DragDrop;
 
   // Creacion del item del menu 'listas'
   MenuItem := TMenuItem.Create(MainMenu1);
@@ -92,19 +104,48 @@ begin
   SubMenuItem.Name := 'mnuAbrir';
   MenuItem.Add(SubMenuItem);
 
-  mostrarListasCreadas(SubMenuItem);
+  TreeView1.OnChange := TreeView1Change;
 
-  NodoSeleccionado      := nil;
-  TreeView1.OnMouseDown := TreeViewMouseDown;
-  TreeView1.PopupMenu   := PopupMenu1;
-  pmAnadir.OnClick      := pmAnadirClick;
-  pmEliminar.OnClick    := pmEliminarClick;
-  pmRenombrar.OnClick   := pmRenombrarClick;
+  // --- Configuración del DBGrid para el historial ---
+  DBGrid1.DataSource := dm_data.DataSource2;
+  // Aseguramos que el DataSource apunte al FDQuery7
+  dm_data.DataSource2.DataSet := dm_data.FDQuery7;
 
-  NodoArrastrado           := nil;
-  TreeView1.DragMode       := dmAutomatic;
-  TreeView1.OnDragOver     := TreeView1DragOver;
-  TreeView1.OnDragDrop     := TreeView1DragDrop;
+  // Limpiamos cualquier columna automática y definimos las deseadas
+  DBGrid1.Columns.Clear;
+  with DBGrid1.Columns.Add do
+  begin
+    FieldName := 'item';
+    Title.Caption := 'Ítem';
+    Width := 150;
+  end;
+  with DBGrid1.Columns.Add do
+  begin
+    FieldName := 'tipo_cambio';
+    Title.Caption := 'Tipo Cambio';
+    Width := 100;
+  end;
+  with DBGrid1.Columns.Add do
+  begin
+    FieldName := 'dato_anterior';
+    Title.Caption := 'Dato Anterior';
+    Width := 90;
+  end;
+  with DBGrid1.Columns.Add do
+  begin
+    FieldName := 'usuario';
+    Title.Caption := 'Usuario';
+    Width := 100;
+  end;
+  with DBGrid1.Columns.Add do
+  begin
+    FieldName := 'fecha_cambio';
+    Title.Caption := 'Fecha';
+    Width := 125;
+    // Opcional: formato de fecha fijo
+    // (Columns[4] as TDateTimeColumn).DisplayFormat := 'dd/mm/yyyy hh:nn:ss';
+  end;
+  // Fin configuración del DBGrid
 end;
 
 {
@@ -120,19 +161,42 @@ begin
   dm_data.FDConnection1.Connected := True;
   TreeView1.CheckBoxes := True;
 
+  // --- BORRAR todo lo que haya en el árbol antes de cargar ---
   TreeView1.Items.Clear;
 
+  // Buscar la lista del proyecto actual
   dm_data.FDQuery4.Close;
-  dm_data.FDQuery4.SQL.Text := 'SELECT id FROM lista WHERE titulo = :titulo';
-  dm_data.FDQuery4.ParamByName('titulo').AsString := Trim(nombre);
-  dm_data.FDQuery4.Prepare;
+  if Trim(nombre) = '' then
+  begin
+    // Sin nombre → carga la primera lista del proyecto
+    dm_data.FDQuery4.SQL.Text :=
+      'SELECT id FROM lista WHERE id_proyecto = :id_proyecto LIMIT 1';
+    dm_data.FDQuery4.ParamByName('id_proyecto').AsInteger := IdProyectoActual;
+  end
+  else
+  begin
+    // Con nombre → busca la lista por titulo y proyecto
+    dm_data.FDQuery4.SQL.Text :=
+      'SELECT id FROM lista WHERE id_proyecto = :id_proyecto AND titulo = :titulo';
+    dm_data.FDQuery4.ParamByName('id_proyecto').AsInteger := IdProyectoActual;
+    dm_data.FDQuery4.ParamByName('titulo').AsString := Trim(nombre);
+  end;
   dm_data.FDQuery4.Open;
+
+  // Si el proyecto no tiene listas todavía, salir
+  if dm_data.FDQuery4.IsEmpty then
+  begin
+    dm_data.FDQuery4.Close;
+    Exit;
+  end;
+
   id_lista := dm_data.FDQuery4.FieldByName('id').AsInteger;
+  IdListaActual := id_lista; // Guardar el id de la lista actual
   dm_data.FDQuery4.Close;
 
+  // --- UNA SOLA QUERY ordenada: raíces primero, luego hijos por ID ---
   dm_data.FDQuery1.Close;
-  dm_data.FDQuery1.SQL.Text :=
-    'SELECT * FROM item ' +
+  dm_data.FDQuery1.SQL.Text := 'SELECT * FROM item ' +
     'WHERE id_lista = :id_lista ' +
     'ORDER BY ISNULL(id_item_padre) DESC, id ASC';
   dm_data.FDQuery1.ParamByName('id_lista').AsInteger := id_lista;
@@ -142,13 +206,17 @@ begin
   begin
     if dm_data.FDQuery1.FieldByName('id_item_padre').IsNull then
     begin
-      NodoPadre := TreeView1.Items.Add(nil, dm_data.FDQuery1.FieldByName('texto').AsString);
+      // --- Nodo RAÍZ ---
+      NodoPadre := TreeView1.Items.Add(nil,
+        dm_data.FDQuery1.FieldByName('texto').AsString);
       NodoPadre.Checked := dm_data.FDQuery1.FieldByName('completado').AsBoolean;
-      NodoPadre.Data    := Pointer(dm_data.FDQuery1.FieldByName('id').AsInteger);
+      // Pillar el estado del checkbox
+      NodoPadre.Data := Pointer(dm_data.FDQuery1.FieldByName('id').AsInteger);
     end
     else
     begin
-      IdPadre   := dm_data.FDQuery1.FieldByName('id_item_padre').AsInteger;
+      // --- Nodo HIJO: buscar su padre por ID en .Data ---
+      IdPadre := dm_data.FDQuery1.FieldByName('id_item_padre').AsInteger;
       NodoPadre := nil;
 
       for i := 0 to TreeView1.Items.Count - 1 do
@@ -161,12 +229,14 @@ begin
       end;
 
       if NodoPadre <> nil then
-        NodoHijo := TreeView1.Items.AddChild(NodoPadre, dm_data.FDQuery1.FieldByName('texto').AsString)
+        NodoHijo := TreeView1.Items.AddChild(NodoPadre,
+          dm_data.FDQuery1.FieldByName('texto').AsString)
       else
-        NodoHijo := TreeView1.Items.Add(nil, dm_data.FDQuery1.FieldByName('texto').AsString);
+        NodoHijo := TreeView1.Items.Add(nil,
+          dm_data.FDQuery1.FieldByName('texto').AsString);
 
       NodoHijo.Checked := dm_data.FDQuery1.FieldByName('completado').AsBoolean;
-      NodoHijo.Data    := Pointer(dm_data.FDQuery1.FieldByName('id').AsInteger);
+      NodoHijo.Data := Pointer(dm_data.FDQuery1.FieldByName('id').AsInteger);
     end;
 
     dm_data.FDQuery1.Next;
@@ -179,18 +249,16 @@ end;
 {
   Procedure recursiva que marca todos los hijos de un nodo
 }
-procedure MarcarHijosRecursivo(Nodo: TTreeNode; Marcado: Boolean; Query: TFDQuery);
+procedure MarcarHijosRecursivo(Nodo: TTreeNode; Marcado: Boolean;
+  Query: TFDQuery);
 var
   Hijo: TTreeNode;
 begin
   Nodo.Checked := Marcado;
 
   Query.Close;
-  Query.SQL.Text :=
-    'UPDATE item SET ' +
-    '  completado = :completado, ' +
-    '  fecha_completado = :fecha ' +
-    'WHERE id = :id';
+  Query.SQL.Text := 'UPDATE item SET ' + '  completado = :completado, ' +
+    '  fecha_completado = :fecha ' + 'WHERE id = :id';
   Query.ParamByName('completado').AsBoolean := Marcado;
   if Marcado then
     Query.ParamByName('fecha').AsDateTime := Now
@@ -209,7 +277,8 @@ end;
 
 {
   Procedure para marcar los hijos de la checkbox seleccionada por el usuario
-  Dependencias: MarcarHijosRecursivo()
+  Dependencias:
+  - MarcarHijosRecursivo()
 }
 procedure TForm1.TreeViewClick(Sender: TObject);
 var
@@ -217,16 +286,22 @@ var
   HitTest: THitTests;
   PuntoLocal: TPoint;
 begin
+  // Obtener la posición del click en coordenadas del TreeView
   PuntoLocal := TreeView1.ScreenToClient(Mouse.CursorPos);
+
+  // Comprobar que el click fue exactamente sobre el checkbox
   HitTest := TreeView1.GetHitTestInfoAt(PuntoLocal.X, PuntoLocal.Y);
-  if not (htOnStateIcon in HitTest) then
+  if not(htOnStateIcon in HitTest) then
     Exit;
 
+  // Obtener el nodo por posición, no por Selected
   Nodo := TreeView1.GetNodeAt(PuntoLocal.X, PuntoLocal.Y);
   if Nodo = nil then
     Exit;
 
   MarcarHijosRecursivo(Nodo, Nodo.Checked, dm_data.FDQuery2);
+  RegistrarHistorial(Integer(Nodo.Data), 'COMPLETADO',
+    BoolToStr(not Nodo.Checked, True));
 end;
 
 {
@@ -247,7 +322,7 @@ begin
 end;
 
 {
-  Procedure que toma todas las listas en la base de datos y la muestra en el menu
+  Procedure que toma todas las listas en la base de datos y la muestra en el menu del programa
 }
 procedure TForm1.mostrarListasCreadas(SubMenuItem: TMenuItem);
 var
@@ -255,10 +330,17 @@ var
 begin
   dm_data.FDConnection1.Connected := True;
   dm_data.FDQuery3.Close;
+
+  // Asigna las listas del proyecto actual
+  dm_data.FDQuery3.SQL.Text :=
+    'SELECT titulo FROM lista WHERE id_proyecto = :id_proyecto';
+  dm_data.FDQuery3.ParamByName('id_proyecto').AsInteger := IdProyectoActual;
+
   dm_data.FDQuery3.Open;
 
   while not dm_data.FDQuery3.EOF do
   begin
+    // Asigna las listas existentes
     SubListaItem := TMenuItem.Create(SubMenuItem);
     SubListaItem.Caption := dm_data.FDQuery3.FieldByName('titulo').AsString;
     SubListaItem.OnClick := AbrirListaClick;
@@ -274,16 +356,20 @@ var
   Item: TMenuItem;
 begin
   Item := TMenuItem(Sender);
+
+  // Aquí llamas al procedure de tu DataModule
   Item.Caption := StringReplace(Item.Caption, '&', '', [rfReplaceAll]);
   insertarLista(Item.Caption);
 end;
 
 {
   Procedure que detecta el clic derecho y guarda el nodo seleccionado
+  - Identifica el nodo bajo el cursor por posición
 }
 procedure TForm1.TreeViewMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 begin
+  // Detecta el clic izquierdo
   if Button = mbLeft then
     NodoArrastrado := TreeView1.GetNodeAt(X, Y);
 
@@ -294,15 +380,19 @@ begin
 
   if NodoSeleccionado = nil then
     PopupMenu1.AutoPopup := False
+    // Bloquear popup si se clickea en un sitio que no hayan nodos
   else
   begin
     PopupMenu1.AutoPopup := True;
-    TreeView1.Selected   := NodoSeleccionado;
+    TreeView1.Selected := NodoSeleccionado;
   end;
 end;
 
 {
   Procedure que añade un nuevo ítem como hijo del nodo seleccionado
+  - Obtiene el ID del padre desde NodoSeleccionado.Data
+  - Inserta el ítem en la BD con el ID del padre
+  - Añade el nodo visualmente en el TreeView con su ID en .Data
 }
 procedure TForm1.pmAnadirClick(Sender: TObject);
 var
@@ -310,48 +400,61 @@ var
   Texto: string;
   IdPadre, IdNuevo: Integer;
 begin
-  if NodoSeleccionado = nil then Exit;
+  if NodoSeleccionado = nil then
+    Exit;
 
   IdPadre := Integer(NodoSeleccionado.Data);
 
   Texto := InputBox('Nuevo ítem', 'Escribe el nombre:', '');
-  if Trim(Texto) = '' then Exit;
+  // Pide el nombre del nuevo ítem con un InputBox
+  if Trim(Texto) = '' then
+    Exit;
 
   dm_data.FDQuery2.Close;
   dm_data.FDQuery2.SQL.Text :=
     'INSERT INTO item (id_lista, id_item_padre, texto, completado) ' +
     'VALUES (:id_lista, :id_padre, :texto, 0)';
-  dm_data.FDQuery2.ParamByName('id_lista').AsInteger := 1;
+  dm_data.FDQuery2.ParamByName('id_lista').AsInteger := IdListaActual;
+  // Usar lista actual
   dm_data.FDQuery2.ParamByName('id_padre').AsInteger := IdPadre;
-  dm_data.FDQuery2.ParamByName('texto').AsString     := Texto;
+  dm_data.FDQuery2.ParamByName('texto').AsString := Texto;
   dm_data.FDQuery2.ExecSQL;
 
   dm_data.FDQuery2.Close;
   dm_data.FDQuery2.SQL.Text := 'SELECT LAST_INSERT_ID() AS nuevo_id';
+  // Recuperar el ID generado con LAST_INSERT_ID()
   dm_data.FDQuery2.Open;
   IdNuevo := dm_data.FDQuery2.FieldByName('nuevo_id').AsInteger;
   dm_data.FDQuery2.Close;
 
-  NodoNuevo         := TreeView1.Items.AddChild(NodoSeleccionado, Texto);
+  RegistrarHistorial(IdNuevo, 'CREADO', Texto);
+
+  NodoNuevo := TreeView1.Items.AddChild(NodoSeleccionado, Texto);
   NodoNuevo.Checked := False;
-  NodoNuevo.Data    := Pointer(IdNuevo);
+  NodoNuevo.Data := Pointer(IdNuevo);
   NodoSeleccionado.Expand(False);
 end;
 
 {
   Procedure que elimina el ítem seleccionado y todos sus hijos
+  - Obtiene el ID del ítem desde NodoSeleccionado.Data
+  - Elimina en BD (CASCADE borra los hijos automáticamente)
 }
 procedure TForm1.pmEliminarClick(Sender: TObject);
 var
   IdItem: Integer;
 begin
-  if NodoSeleccionado = nil then Exit;
+  if NodoSeleccionado = nil then
+    Exit;
 
   IdItem := Integer(NodoSeleccionado.Data);
 
   if MessageDlg('¿Eliminar "' + NodoSeleccionado.Text + '" y todos sus hijos?',
-                mtConfirmation, [mbYes, mbNo], 0) = mrNo then
+    // Pedir confirmación al usuario antes de borrar
+    mtConfirmation, [mbYes, mbNo], 0) = mrNo then
     Exit;
+
+  RegistrarHistorial(IdItem, 'BORRADO', NodoSeleccionado.Text);
 
   dm_data.FDQuery2.Close;
   dm_data.FDQuery2.SQL.Text := 'DELETE FROM item WHERE id = :id';
@@ -359,6 +462,7 @@ begin
   dm_data.FDQuery2.ExecSQL;
 
   TreeView1.Items.Delete(NodoSeleccionado);
+  // Eliminar nodo el TreeView (También sus hijos)
   NodoSeleccionado := nil;
 end;
 
@@ -370,23 +474,31 @@ var
   TextoNuevo: string;
   IdItem: Integer;
 begin
-  if NodoSeleccionado = nil then Exit;
+  if NodoSeleccionado = nil then
+    Exit;
 
   IdItem := Integer(NodoSeleccionado.Data);
 
+  // InputBox para cambiar el texto
   TextoNuevo := InputBox('Renombrar', 'Nuevo nombre: ', NodoSeleccionado.Text);
 
-  if Trim(TextoNuevo) = '' then Exit;
-  if TextoNuevo = NodoSeleccionado.Text then Exit;
+  // Si no cambia nada o canceló, no hacer nada
+  if Trim(TextoNuevo) = '' then
+    Exit;
+  if TextoNuevo = NodoSeleccionado.Text then
+    Exit;
 
+  RegistrarHistorial(IdItem, 'TEXTO', NodoSeleccionado.Text);
+
+  // Actualizar en BD
   dm_data.FDQuery2.Close;
   dm_data.FDQuery2.SQL.Text := 'UPDATE item SET texto = :texto WHERE id = :id';
-  dm_data.FDQuery2.ParamByName('texto').AsString  := TextoNuevo;
-  dm_data.FDQuery2.ParamByName('id').AsInteger    := IdItem;
+  dm_data.FDQuery2.ParamByName('texto').AsString := TextoNuevo;
+  dm_data.FDQuery2.ParamByName('id').AsInteger := IdItem;
   dm_data.FDQuery2.ExecSQL;
   dm_data.FDQuery2.Close;
 
-  NodoSeleccionado.Text := TextoNuevo;
+  NodoSeleccionado.Text := TextoNuevo; // Actualizar en el TreeView
 end;
 
 {
@@ -397,17 +509,24 @@ var
   Texto, Descripcion: String;
   SubItem: TMenuItem;
 begin
-  Texto       := InputBox('Nueva lista', 'Escribe el nombre:', '');
+  // Recoge el nombre y descripcion de la lista
+  Texto := InputBox('Nueva lista', 'Escribe el nombre:', '');
+  if Trim(Texto) = '' then
+    Exit;
   Descripcion := InputBox('Descripcion de la lista:', 'Escribe', '');
 
+  // Inserta la lista en la base de datos
   dm_data.FDQuery5.Close;
   dm_data.FDQuery5.SQL.Text :=
-    'INSERT INTO lista (id_usuario, titulo, descripcion, ES_NOTA) ' +
-    'VALUES (1, :nombre, :descripcion, 0)';
-  dm_data.FDQuery5.ParamByName('nombre').AsString      := Texto;
+    'INSERT INTO lista (id_usuario, id_proyecto, titulo, descripcion, ES_NOTA) '
+    + 'VALUES (:id_usuario, :id_proyecto, :nombre, :descripcion, 0)';
+  dm_data.FDQuery5.ParamByName('id_usuario').AsInteger := IdUsuarioActual;
+  dm_data.FDQuery5.ParamByName('id_proyecto').AsInteger := IdProyectoActual;
+  dm_data.FDQuery5.ParamByName('nombre').AsString := Texto;
   dm_data.FDQuery5.ParamByName('descripcion').AsString := Descripcion;
   dm_data.FDQuery5.ExecSQL;
 
+  // A esta lista se le añade un item por defecto llamado 'raiz'
   dm_data.FDQuery5.SQL.Text :=
     'INSERT INTO item (id_lista, id_item_padre, texto, completado) ' +
     'VALUES (LAST_INSERT_ID(), NULL, ''raiz'', 0)';
@@ -415,9 +534,14 @@ begin
   dm_data.FDQuery5.Close;
 
   SubItem := TMenuItem(MainMenu1.FindComponent('mnuAbrir'));
+
+  // Borra la lista entera del menu
   while SubItem.Count > 0 do
     SubItem.Delete(0);
+
+  // La vuelve a mostrar y carga la nueva lista
   mostrarListasCreadas(SubItem);
+  insertarLista(Texto);
 end;
 
 procedure TForm1.borrarListaFunction(Sender: TObject);
@@ -426,20 +550,32 @@ var
   SubItem: TMenuItem;
 begin
   Texto := InputBox('Nombre de la lista a borrar:', '', '');
+  if Trim(Texto) = '' then
+    Exit;
 
   dm_data.FDQuery5.Close;
-  dm_data.FDQuery5.SQL.Text := 'DELETE FROM lista WHERE titulo = :nombre';
+  dm_data.FDQuery5.SQL.Text :=
+    'DELETE FROM lista WHERE titulo = :nombre AND id_proyecto = :id_proyecto';
+  dm_data.FDQuery5.ParamByName('id_proyecto').AsInteger := IdProyectoActual;
   dm_data.FDQuery5.ParamByName('nombre').AsString := Texto;
   dm_data.FDQuery5.ExecSQL;
+  dm_data.FDQuery5.Close;
 
   SubItem := TMenuItem(MainMenu1.FindComponent('mnuAbrir'));
+
+  // Borra la lista entera del menu
   while SubItem.Count > 0 do
     SubItem.Delete(0);
+
+  // La vuelve a mostrar y limpia el arbol
   mostrarListasCreadas(SubItem);
+  TreeView1.Items.Clear;
 end;
 
 {
   Procedure que acepta o rechaza el drag mientras se arrastra
+  - Acepta el drop solo si el origen es el propio TreeView
+  - Resalta el nodo destino visualmente mientras se arrastra
 }
 procedure TForm1.TreeView1DragOver(Sender, Source: TObject; X, Y: Integer;
   State: TDragState; var Accept: Boolean);
@@ -464,27 +600,36 @@ var
 begin
   NodoDestino := TreeView1.GetNodeAt(X, Y);
 
-  if NodoDestino = nil then Exit;
-  if NodoArrastrado = nil then Exit;
-  if NodoDestino = NodoArrastrado then Exit;
+  if NodoDestino = nil then
+    Exit;
+  if NodoArrastrado = nil then
+    Exit;
+  if NodoDestino = NodoArrastrado then
+    Exit;
 
+  // Evitar soltar un padre sobre uno de sus propios hijos
   NodoHijo := NodoDestino.Parent;
   while NodoHijo <> nil do
   begin
-    if NodoHijo = NodoArrastrado then Exit;
+    if NodoHijo = NodoArrastrado then
+      Exit;
     NodoHijo := NodoHijo.Parent;
   end;
 
+  // Mover visualmente
   NodoArrastrado.MoveTo(NodoDestino, naAddChild);
   NodoDestino.Expand(False);
 
+  // Actualizar id_item_padre en BD
   dm_data.FDQuery2.Close;
   dm_data.FDQuery2.SQL.Text :=
     'UPDATE item SET id_item_padre = :nuevo_padre WHERE id = :id';
-  dm_data.FDQuery2.ParamByName('nuevo_padre').AsInteger := Integer(NodoDestino.Data);
-  dm_data.FDQuery2.ParamByName('id').AsInteger          := Integer(NodoArrastrado.Data);
+  dm_data.FDQuery2.ParamByName('nuevo_padre').AsInteger :=
+    Integer(NodoDestino.Data);
+  dm_data.FDQuery2.ParamByName('id').AsInteger := Integer(NodoArrastrado.Data);
   dm_data.FDQuery2.ExecSQL;
 
+  // Recalcular orden de los hermanos bajo el nuevo padre
   NodoHijo := NodoDestino.getFirstChild;
   i := 1;
   while NodoHijo <> nil do
@@ -493,13 +638,71 @@ begin
     dm_data.FDQuery2.SQL.Text :=
       'UPDATE item SET orden = :orden WHERE id = :id';
     dm_data.FDQuery2.ParamByName('orden').AsInteger := i;
-    dm_data.FDQuery2.ParamByName('id').AsInteger    := Integer(NodoHijo.Data);
+    dm_data.FDQuery2.ParamByName('id').AsInteger := Integer(NodoHijo.Data);
     dm_data.FDQuery2.ExecSQL;
     Inc(i);
     NodoHijo := NodoHijo.getNextSibling;
   end;
 
   NodoArrastrado := nil;
+end;
+
+// Implementación en Unit1:
+procedure TForm1.RecargarMenuListas;
+var
+  SubItem: TMenuItem;
+begin
+  SubItem := TMenuItem(MainMenu1.FindComponent('mnuAbrir'));
+  if SubItem = nil then
+    Exit;
+  while SubItem.Count > 0 do
+    SubItem.Delete(0);
+  mostrarListasCreadas(SubItem);
+end;
+
+{
+  Procedure que registra un cambio en la tabla historial
+  - Inserta un registro con el tipo de cambio y el dato anterior
+  - Usa IdUsuarioActual para saber quién hizo el cambio
+  - Ahora incluye el id_lista (IdListaActual)
+}
+procedure TForm1.RegistrarHistorial(IdItem: Integer; TipoCambio: String;
+  DatoAnterior: String);
+begin
+  dm_data.FDQuery7.Close;
+  dm_data.FDQuery7.SQL.Text :=
+    'INSERT INTO historial (id_item, id_lista, id_usuario, tipo_cambio, dato_anterior) ' +
+    'VALUES (:id_item, :id_lista, :id_usuario, :tipo_cambio, :dato_anterior)';
+  dm_data.FDQuery7.ParamByName('id_item').AsInteger      := IdItem;
+  dm_data.FDQuery7.ParamByName('id_lista').AsInteger     := IdListaActual;
+  dm_data.FDQuery7.ParamByName('id_usuario').AsInteger   := IdUsuarioActual;
+  dm_data.FDQuery7.ParamByName('tipo_cambio').AsString   := TipoCambio;
+  dm_data.FDQuery7.ParamByName('dato_anterior').AsString := DatoAnterior;
+  dm_data.FDQuery7.ExecSQL;
+  dm_data.FDQuery7.Close;
+end;
+
+procedure TForm1.TreeView1Change(Sender: TObject; Node: TTreeNode);
+begin
+  if Node = nil then Exit;
+  if IdListaActual = 0 then Exit;
+
+  dm_data.FDQuery7.Close;
+  dm_data.FDQuery7.SQL.Text :=
+    'SELECT COALESCE(i.texto, h.dato_anterior) AS item, ' +
+    'h.tipo_cambio, ' +
+    'h.dato_anterior, ' +
+    'u.nombre AS usuario, ' +
+    'h.fecha_cambio ' +
+    'FROM historial h ' +
+    'INNER JOIN usuarios u ON h.id_usuario = u.id ' +
+    'LEFT JOIN item i ON h.id_item = i.id ' +
+    'WHERE h.id_lista = :id_lista ' +  // filtra directamente por lista
+    'ORDER BY h.fecha_cambio DESC';
+  dm_data.FDQuery7.ParamByName('id_lista').AsInteger := IdListaActual;
+  dm_data.FDQuery7.Open;
+
+  DBGrid1.DataSource := dm_data.DataSource2;
 end;
 
 end.

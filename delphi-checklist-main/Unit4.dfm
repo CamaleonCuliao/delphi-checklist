@@ -1,10 +1,10 @@
 object Form4: TForm4
-  Left = 511
-  Top = 187
+  Left = 817
+  Top = 166
   BorderStyle = bsSingle
   Caption = 'Form4'
-  ClientHeight = 647
-  ClientWidth = 1072
+  ClientHeight = 648
+  ClientWidth = 1056
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -39,9 +39,10 @@ object Form4: TForm4
     Font.Name = 'Segoe UI Variable Small'
     Font.Style = []
     ParentFont = False
+    OnClick = btnAccederClick
   end
   object btnBorrarProyect: TSpeedButton
-    Left = 472
+    Left = 456
     Top = 548
     Width = 193
     Height = 57
@@ -52,6 +53,7 @@ object Form4: TForm4
     Font.Name = 'Segoe UI Variable Small'
     Font.Style = []
     ParentFont = False
+    OnClick = btnBorrarProyectClick
   end
   object PageControl1: TPageControl
     Left = 736
@@ -94,7 +96,7 @@ object Form4: TForm4
         Width = 229
         Height = 73
         TabOrder = 0
-        object SpeedButton1: TSpeedButton
+        object btnUnirAcceder: TSpeedButton
           Left = -23
           Top = 0
           Width = 276
@@ -106,6 +108,7 @@ object Form4: TForm4
           Font.Name = 'Segoe UI Variable Small'
           Font.Style = []
           ParentFont = False
+          OnClick = btnUnirAccederClick
         end
       end
       object editUnirNombreProyect: TEdit
@@ -197,6 +200,7 @@ object Form4: TForm4
           Font.Name = 'Segoe UI Variable Small'
           Font.Style = []
           ParentFont = False
+          OnClick = btnCrearProyectoClick
         end
       end
       object memoCrearDescripProyect: TMemo
@@ -220,5 +224,16 @@ object Form4: TForm4
     TitleFont.Height = -12
     TitleFont.Name = 'Segoe UI'
     TitleFont.Style = []
+    Columns = <
+      item
+        Expanded = False
+        Width = 147
+        Visible = True
+      end
+      item
+        Expanded = False
+        Width = 447
+        Visible = True
+      end>
   end
 end

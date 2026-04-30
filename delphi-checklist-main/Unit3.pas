@@ -20,6 +20,8 @@ type
     FDQuery4: TFDQuery;
     FDQuery5: TFDQuery;
     FDQuery6: TFDQuery;
+    FDQuery7: TFDQuery;
+    DataSource2: TDataSource;
   private
     { Private declarations }
   public
@@ -29,6 +31,7 @@ type
 var
   dm_data: Tdm_data;
   IdUsuarioActual: Integer = 0;
+  IdListaActual: Integer = 0;
 
 implementation
 
