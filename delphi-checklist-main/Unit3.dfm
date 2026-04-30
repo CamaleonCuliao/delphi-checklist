@@ -60,4 +60,14 @@ object dm_data: Tdm_data
     Left = 424
     Top = 96
   end
+  object FDQuery7: TFDQuery
+    Connection = FDConnection1
+    Left = 496
+    Top = 96
+  end
+  object DataSource2: TDataSource
+    DataSet = FDQuery7
+    Left = 136
+    Top = 176
+  end
 end

@@ -3,7 +3,7 @@ object Form1: TForm1
   Top = 0
   Caption = 'Delphi Checklist'
   ClientHeight = 688
-  ClientWidth = 1132
+  ClientWidth = 1088
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -14,10 +14,10 @@ object Form1: TForm1
   OnCreate = FormCreate
   TextHeight = 15
   object DBGrid1: TDBGrid
-    Left = 712
-    Top = 64
-    Width = 320
-    Height = 120
+    Left = 680
+    Top = 58
+    Width = 385
+    Height = 217
     TabOrder = 0
     TitleFont.Charset = DEFAULT_CHARSET
     TitleFont.Color = clWindowText
@@ -45,7 +45,7 @@ object Form1: TForm1
     end
   end
   object ToggleSwitch1: TToggleSwitch
-    Left = 712
+    Left = 680
     Top = 32
     Width = 131
     Height = 20
@@ -55,12 +55,12 @@ object Form1: TForm1
     OnClick = ToggleSwitch1Click
   end
   object MainMenu1: TMainMenu
-    Left = 728
-    Top = 440
+    Left = 672
+    Top = 416
   end
   object PopupMenu1: TPopupMenu
-    Left = 800
-    Top = 440
+    Left = 672
+    Top = 464
     object pmAnadir: TMenuItem
       Caption = 'A'#241'adir'
     end

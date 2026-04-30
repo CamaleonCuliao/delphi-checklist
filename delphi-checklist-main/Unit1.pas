@@ -40,6 +40,8 @@ type
     procedure TreeViewMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
     procedure borrarListaFunction(Sender: TObject);
+    procedure RegistrarHistorial(IdItem: Integer; TipoCambio: String; DatoAnterior: String);
+    procedure TreeView1Change(Sender: TObject; Node: TTreeNode);
   private
     NodoSeleccionado: TTreeNode;
     NodoArrastrado: TTreeNode;
@@ -97,6 +99,9 @@ begin
   SubMenuItem.Caption := 'Abrir...';
   SubMenuItem.Name := 'mnuAbrir';
   MenuItem.Add(SubMenuItem);
+
+  TreeView1.OnChange  := TreeView1Change;
+  DBGrid1.DataSource  := dm_data.DataSource2;
 end;
 
 {
@@ -250,6 +255,7 @@ begin
     Exit;
 
   MarcarHijosRecursivo(Nodo, Nodo.Checked, dm_data.FDQuery2);
+  RegistrarHistorial(Integer(Nodo.Data), 'COMPLETADO', BoolToStr(not Nodo.Checked, True));
 end;
 
 {
@@ -368,6 +374,8 @@ begin
   IdNuevo := dm_data.FDQuery2.FieldByName('nuevo_id').AsInteger;
   dm_data.FDQuery2.Close;
 
+  RegistrarHistorial(IdNuevo, 'CREADO', '');
+
   NodoNuevo         := TreeView1.Items.AddChild(NodoSeleccionado, Texto);
   NodoNuevo.Checked := False;
   NodoNuevo.Data    := Pointer(IdNuevo);
@@ -389,7 +397,9 @@ begin
 
   if MessageDlg('¿Eliminar "' + NodoSeleccionado.Text + '" y todos sus hijos?', // Pedir confirmación al usuario antes de borrar
                 mtConfirmation, [mbYes, mbNo], 0) = mrNo then
-    Exit;
+  Exit;
+
+  RegistrarHistorial(IdItem, 'BORRADO', NodoSeleccionado.Text);
 
   dm_data.FDQuery2.Close;
   dm_data.FDQuery2.SQL.Text := 'DELETE FROM item WHERE id = :id';
@@ -418,6 +428,8 @@ begin
   //Si no cambia nada o canceló, no hacer nada
   if Trim(TextoNuevo) = '' then Exit;
   if TextoNuevo = NodoSeleccionado.Text then Exit;
+
+  RegistrarHistorial(IdItem, 'TEXTO', NodoSeleccionado.Text);
 
   //Actualizar en BD
   dm_data.FDQuery2.Close;
@@ -579,6 +591,47 @@ begin
   while SubItem.Count > 0 do
     SubItem.Delete(0);
   mostrarListasCreadas(SubItem);
+end;
+
+{
+  Procedure que registra un cambio en la tabla historial
+    - Inserta un registro con el tipo de cambio y el dato anterior
+    - Usa IdUsuarioActual para saber quién hizo el cambio
+}
+procedure TForm1.RegistrarHistorial(IdItem: Integer; TipoCambio: String; DatoAnterior: String);
+begin
+  dm_data.FDQuery7.Close;
+  dm_data.FDQuery7.SQL.Text :=
+    'INSERT INTO historial (id_item, id_usuario, tipo_cambio, dato_anterior) ' +
+    'VALUES (:id_item, :id_usuario, :tipo_cambio, :dato_anterior)';
+  dm_data.FDQuery7.ParamByName('id_item').AsInteger     := IdItem;
+  dm_data.FDQuery7.ParamByName('id_usuario').AsInteger  := IdUsuarioActual;
+  dm_data.FDQuery7.ParamByName('tipo_cambio').AsString  := TipoCambio;
+  dm_data.FDQuery7.ParamByName('dato_anterior').AsString := DatoAnterior;
+  dm_data.FDQuery7.ExecSQL;
+  dm_data.FDQuery7.Close;
+end;
+
+procedure TForm1.TreeView1Change(Sender: TObject; Node: TTreeNode);
+begin
+  if Node = nil then Exit;
+
+  dm_data.FDQuery7.Close;
+  dm_data.FDQuery7.SQL.Text :=
+    'SELECT COALESCE(i.texto, h.dato_anterior) AS item, ' +
+    'h.tipo_cambio, ' +
+    'h.dato_anterior, ' +
+    'u.nombre AS usuario, ' +
+    'h.fecha_cambio ' +
+    'FROM historial h ' +
+    'INNER JOIN usuarios u ON h.id_usuario = u.id ' +
+    'LEFT JOIN item i ON h.id_item = i.id ' +
+    'WHERE h.id_item IN (SELECT id FROM item WHERE id_lista = :id_lista) ' +
+    'ORDER BY h.fecha_cambio DESC';
+  dm_data.FDQuery7.ParamByName('id_lista').AsInteger := IdListaActual;
+  dm_data.FDQuery7.Open;
+
+  DBGrid1.DataSource := dm_data.DataSource2;
 end;
 
 end.
