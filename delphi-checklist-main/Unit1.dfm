@@ -27,6 +27,14 @@ object Form1: TForm1
     ParentFont = False
     OnClick = btnAbrirProyectsClick
   end
+  object btnRecargar: TSpeedButton
+    Left = 817
+    Top = 27
+    Width = 100
+    Height = 25
+    Caption = #55357#56580' Recargar'
+    OnClick = btnRecargarClick
+  end
   object DBGrid1: TDBGrid
     Left = 680
     Top = 58

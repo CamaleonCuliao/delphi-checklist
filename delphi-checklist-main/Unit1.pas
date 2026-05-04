@@ -28,6 +28,7 @@ type
     pmRenombrar: TMenuItem;
     ImageList1: TImageList;
     btnAbrirProyects: TSpeedButton;
+    btnRecargar: TSpeedButton;
 
     procedure AbrirListaClick(Sender: TObject);
     procedure mostrarListasCreadas(SubMenuItem: TMenuItem);
@@ -48,9 +49,11 @@ type
       DatoAnterior: String);
     procedure TreeView1Change(Sender: TObject; Node: TTreeNode);
     procedure btnAbrirProyectsClick(Sender: TObject);
+    procedure btnRecargarClick(Sender: TObject);
   private
     NodoSeleccionado: TTreeNode;
     NodoArrastrado: TTreeNode;
+    TituloListaActual: String;
   public
     procedure RecargarMenuListas;
     procedure insertarLista(nombre: String);
@@ -190,6 +193,7 @@ begin
 
   id_lista := dm_data.FDQuery4.FieldByName('id').AsInteger;
   IdListaActual := id_lista;
+  TituloListaActual := Trim(nombre);
   dm_data.FDQuery4.Close;
 
   dm_data.FDQuery1.Close;
@@ -673,6 +677,35 @@ begin
   dm_data.FDQuery7.Open;
 
   DBGrid1.DataSource := dm_data.DataSource2;
+end;
+
+procedure TForm1.btnRecargarClick(Sender: TObject);
+begin
+  RecargarMenuListas;
+
+  if TituloListaActual = '' then
+    insertarLista('')
+  else
+    insertarLista(TituloListaActual);
+
+  // Recargar el historial de la lista activa sin necesidad de tocar un nodo
+  if IdListaActual > 0 then
+  begin
+    dm_data.FDQuery7.Close;
+    dm_data.FDQuery7.SQL.Text :=
+      'SELECT COALESCE(i.texto, h.dato_anterior) AS item, ' +
+      'h.tipo_cambio, ' +
+      'h.dato_anterior, ' +
+      'u.nombre AS usuario, ' +
+      'h.fecha_cambio ' +
+      'FROM historial h ' +
+      'INNER JOIN usuarios u ON h.id_usuario = u.id ' +
+      'LEFT JOIN item i ON h.id_item = i.id ' +
+      'WHERE h.id_lista = :id_lista ' +
+      'ORDER BY h.fecha_cambio DESC';
+    dm_data.FDQuery7.ParamByName('id_lista').AsInteger := IdListaActual;
+    dm_data.FDQuery7.Open;
+  end;
 end;
 
 end.
