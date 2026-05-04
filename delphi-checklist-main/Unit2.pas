@@ -6,7 +6,7 @@ uses
   Unit3, Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
   System.Classes, Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs,
   Vcl.ExtCtrls, Vcl.ComCtrls, Vcl.WinXPanels, Vcl.StdCtrls, Vcl.Buttons,
-  Vcl.Imaging.pngimage;
+  Vcl.Imaging.pngimage, System.Hash;
 
 type
   TForm2 = class(TForm)
@@ -41,6 +41,7 @@ type
     procedure TogglePassword(Edit: TEdit; Button: TSpeedButton);
     procedure LoadButtonImages;
     procedure LoadPngToButton(Button: TSpeedButton; const FileName: string);
+    function HashPass(const s: String): String;
   public
   end;
 
@@ -50,6 +51,12 @@ var
 implementation
 
 {$R *.dfm}
+
+//Funcion para encriptar las contraseñas
+function TForm2.HashPass(const s: String): String;
+begin
+  Result := THashMD5.GetHashString(s);
+end;
 
 procedure TForm2.LoadPngToButton(Button: TSpeedButton; const FileName: string);
 var
@@ -222,7 +229,7 @@ begin
     'VALUES (:nombre, :email, :pass)';
   dm_data.FDQuery2.ParamByName('nombre').AsString := Nombre;
   dm_data.FDQuery2.ParamByName('email').AsString  := Email;
-  dm_data.FDQuery2.ParamByName('pass').AsString   := Password;
+  dm_data.FDQuery2.ParamByName('pass').AsString   := HashPass(Password);
   dm_data.FDQuery2.ExecSQL;
   dm_data.FDQuery2.Close;
 
@@ -248,7 +255,7 @@ begin
   dm_data.FDQuery2.SQL.Text :=
     'SELECT id FROM usuarios WHERE nombre = :nombre AND contraseña = :pass';
   dm_data.FDQuery2.ParamByName('nombre').AsString := Usuario;
-  dm_data.FDQuery2.ParamByName('pass').AsString   := Password;
+  dm_data.FDQuery2.ParamByName('pass').AsString   := HashPass(Password);
   dm_data.FDQuery2.Open;
 
   if dm_data.FDQuery2.IsEmpty then

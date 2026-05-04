@@ -3,9 +3,10 @@ object dm_data: Tdm_data
   Width = 640
   object FDConnection1: TFDConnection
     Params.Strings = (
-      'User_Name=root'
-      'Server=localhost'
-      'Database=checklistdelphi'
+      'User_Name=admindelphi'
+      'Server=delphipauborja.fabricomiweb.com'
+      'Database=delphiBDPauBorja'
+      'Password=#fvS9aCQe9x_5gdk'
       'DriverID=MySQL')
     Left = 56
     Top = 24

@@ -679,6 +679,9 @@ begin
   DBGrid1.DataSource := dm_data.DataSource2;
 end;
 
+{
+  Procedure para recargar listas e historial
+}
 procedure TForm1.btnRecargarClick(Sender: TObject);
 begin
   RecargarMenuListas;
