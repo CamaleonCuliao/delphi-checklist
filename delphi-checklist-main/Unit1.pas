@@ -26,9 +26,10 @@ type
     pmAnadir: TMenuItem;
     pmEliminar: TMenuItem;
     pmRenombrar: TMenuItem;
-    ImageList1: TImageList;
     btnAbrirProyects: TSpeedButton;
     btnRecargar: TSpeedButton;
+    MemoNotas: TMemo;
+    LblNotas: TLabel;
 
     procedure AbrirListaClick(Sender: TObject);
     procedure mostrarListasCreadas(SubMenuItem: TMenuItem);
@@ -50,10 +51,14 @@ type
     procedure TreeView1Change(Sender: TObject; Node: TTreeNode);
     procedure btnAbrirProyectsClick(Sender: TObject);
     procedure btnRecargarClick(Sender: TObject);
+    procedure CargarNotasProyecto;
+    procedure insertarNuevaNota(Sender: TObject);
+
   private
     NodoSeleccionado: TTreeNode;
     NodoArrastrado: TTreeNode;
     TituloListaActual: String;
+    EsNotaActual: Boolean;
   public
     procedure RecargarMenuListas;
     procedure insertarLista(nombre: String);
@@ -112,6 +117,11 @@ begin
   SubMenuItem := TMenuItem.Create(MainMenu1);
   SubMenuItem.Caption := 'Abrir...';
   SubMenuItem.Name := 'mnuAbrir';
+  MenuItem.Add(SubMenuItem);
+
+  SubMenuItem := TMenuItem.Create(MainMenu1);
+  SubMenuItem.Caption := 'Crear nota';
+  SubMenuItem.OnClick := insertarNuevaNota;
   MenuItem.Add(SubMenuItem);
 
   TreeView1.OnChange := TreeView1Change;
@@ -242,6 +252,7 @@ begin
 
   dm_data.FDQuery1.Close;
   TreeView1.FullExpand;
+  CargarNotasProyecto;
 end;
 
 {
@@ -325,7 +336,7 @@ begin
   dm_data.FDQuery3.Close;
 
   dm_data.FDQuery3.SQL.Text :=
-    'SELECT titulo FROM lista WHERE id_proyecto = :id_proyecto';
+  'SELECT titulo FROM lista WHERE id_proyecto = :id_proyecto AND ES_NOTA = 0';
   dm_data.FDQuery3.ParamByName('id_proyecto').AsInteger := IdProyectoActual;
 
   dm_data.FDQuery3.Open;
@@ -709,6 +720,71 @@ begin
     dm_data.FDQuery7.ParamByName('id_lista').AsInteger := IdListaActual;
     dm_data.FDQuery7.Open;
   end;
+  CargarNotasProyecto;
+end;
+
+{
+  Procedure que carga las notas del proyecto activo en el MemoNotas.
+  Consulta todas las listas con ES_NOTA = 1 del proyecto actual
+  y muestra su título y descripción agrupados.
+}
+procedure TForm1.CargarNotasProyecto;
+begin
+  if IdProyectoActual = 0 then
+  begin
+    MemoNotas.Clear;
+    Exit;
+  end;
+
+  dm_data.FDQuery6.Close;
+  dm_data.FDQuery6.SQL.Text :=
+    'SELECT titulo, descripcion FROM lista ' +
+    'WHERE id_proyecto = :id_proyecto AND ES_NOTA = 1 ' +
+    'ORDER BY fecha_creacion ASC';
+  dm_data.FDQuery6.ParamByName('id_proyecto').AsInteger := IdProyectoActual;
+  dm_data.FDQuery6.Open;
+
+  MemoNotas.Clear;
+  if dm_data.FDQuery6.IsEmpty then
+    MemoNotas.Lines.Add('(Sin notas)')
+  else
+    while not dm_data.FDQuery6.EOF do
+    begin
+      MemoNotas.Lines.Add('=== ' + dm_data.FDQuery6.FieldByName('titulo').AsString + ' ===');
+      MemoNotas.Lines.Add(dm_data.FDQuery6.FieldByName('descripcion').AsString);
+      MemoNotas.Lines.Add('');
+      dm_data.FDQuery6.Next;
+    end;
+
+  dm_data.FDQuery6.Close;
+end;
+
+{
+  Procedure que inserta una nueva nota en la base de datos con ES_NOTA = 1.
+  Pide al usuario el título y el contenido mediante InputBox
+  y recarga el MemoNotas al terminar.
+}
+procedure TForm1.insertarNuevaNota(Sender: TObject);
+var
+  Titulo, Contenido: String;
+begin
+  Titulo := InputBox('Nueva nota', 'Título de la nota:', '');
+  if Trim(Titulo) = '' then Exit;
+
+  Contenido := InputBox('Contenido:', 'Escribe el contenido:', '');
+
+  dm_data.FDQuery5.Close;
+  dm_data.FDQuery5.SQL.Text :=
+    'INSERT INTO lista (id_usuario, id_proyecto, titulo, descripcion, ES_NOTA) ' +
+    'VALUES (:id_usuario, :id_proyecto, :titulo, :descripcion, 1)';
+  dm_data.FDQuery5.ParamByName('id_usuario').AsInteger := IdUsuarioActual;
+  dm_data.FDQuery5.ParamByName('id_proyecto').AsInteger := IdProyectoActual;
+  dm_data.FDQuery5.ParamByName('titulo').AsString := Titulo;
+  dm_data.FDQuery5.ParamByName('descripcion').AsString := Contenido;
+  dm_data.FDQuery5.ExecSQL;
+  dm_data.FDQuery5.Close;
+
+  CargarNotasProyecto;
 end;
 
 end.
