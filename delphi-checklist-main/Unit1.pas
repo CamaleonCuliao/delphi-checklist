@@ -742,27 +742,27 @@ begin
     Exit;
   end;
 
-  dm_data.FDQuery6.Close;
-  dm_data.FDQuery6.SQL.Text :=
+  dm_data.FDQuery8.Close;
+  dm_data.FDQuery8.SQL.Text :=
     'SELECT titulo, descripcion FROM lista ' +
     'WHERE id_proyecto = :id_proyecto AND ES_NOTA = 1 ' +
     'ORDER BY fecha_creacion ASC';
-  dm_data.FDQuery6.ParamByName('id_proyecto').AsInteger := IdProyectoActual;
-  dm_data.FDQuery6.Open;
+  dm_data.FDQuery8.ParamByName('id_proyecto').AsInteger := IdProyectoActual;
+  dm_data.FDQuery8.Open;
 
   MemoNotas.Clear;
-  if dm_data.FDQuery6.IsEmpty then
+  if dm_data.FDQuery8.IsEmpty then
     MemoNotas.Lines.Add('(Sin notas)')
   else
-    while not dm_data.FDQuery6.EOF do
+    while not dm_data.FDQuery8.EOF do
     begin
-      MemoNotas.Lines.Add('=== ' + dm_data.FDQuery6.FieldByName('titulo').AsString + ' ===');
-      MemoNotas.Lines.Add(dm_data.FDQuery6.FieldByName('descripcion').AsString);
+      MemoNotas.Lines.Add('=== ' + dm_data.FDQuery8.FieldByName('titulo').AsString + ' ===');
+      MemoNotas.Lines.Add(dm_data.FDQuery8.FieldByName('descripcion').AsString);
       MemoNotas.Lines.Add('');
-      dm_data.FDQuery6.Next;
+      dm_data.FDQuery8.Next;
     end;
 
-  dm_data.FDQuery6.Close;
+  dm_data.FDQuery8.Close;
 end;
 
 {
