@@ -53,6 +53,7 @@ type
     procedure btnRecargarClick(Sender: TObject);
     procedure CargarNotasProyecto;
     procedure insertarNuevaNota(Sender: TObject);
+    procedure borrarNota(Sender: TObject);
 
   private
     NodoSeleccionado: TTreeNode;
@@ -122,6 +123,11 @@ begin
   SubMenuItem := TMenuItem.Create(MainMenu1);
   SubMenuItem.Caption := 'Crear nota';
   SubMenuItem.OnClick := insertarNuevaNota;
+  MenuItem.Add(SubMenuItem);
+
+  SubMenuItem := TMenuItem.Create(MainMenu1);
+  SubMenuItem.Caption := 'Borrar nota';
+  SubMenuItem.OnClick := borrarNota;
   MenuItem.Add(SubMenuItem);
 
   TreeView1.OnChange := TreeView1Change;
@@ -781,6 +787,28 @@ begin
   dm_data.FDQuery5.ParamByName('id_proyecto').AsInteger := IdProyectoActual;
   dm_data.FDQuery5.ParamByName('titulo').AsString := Titulo;
   dm_data.FDQuery5.ParamByName('descripcion').AsString := Contenido;
+  dm_data.FDQuery5.ExecSQL;
+  dm_data.FDQuery5.Close;
+
+  CargarNotasProyecto;
+end;
+
+{
+  Procedure que elimina una nota del proyecto activo por su título.
+  Solo borra listas con ES_NOTA = 1 para no afectar a las listas de tareas.
+}
+procedure TForm1.borrarNota(Sender: TObject);
+var
+  Titulo: String;
+begin
+  Titulo := InputBox('Borrar nota', 'Título de la nota a borrar:', '');
+  if Trim(Titulo) = '' then
+    Exit;
+
+  dm_data.FDQuery5.Close;
+  dm_data.FDQuery5.SQL.Text :='DELETE FROM lista WHERE titulo = :titulo ' + 'AND id_proyecto = :id_proyecto AND ES_NOTA = 1';
+  dm_data.FDQuery5.ParamByName('titulo').AsString := Titulo;
+  dm_data.FDQuery5.ParamByName('id_proyecto').AsInteger := IdProyectoActual;
   dm_data.FDQuery5.ExecSQL;
   dm_data.FDQuery5.Close;
 
