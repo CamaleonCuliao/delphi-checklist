@@ -50,6 +50,14 @@ object Form1: TForm1
     Font.Style = [fsBold]
     ParentFont = False
   end
+  object btnVisorDatos: TSpeedButton
+    Left = 1168
+    Top = 8
+    Width = 58
+    Height = 44
+    Caption = 'Ver datos'
+    OnClick = btnVisorDatosClick
+  end
   object DBGrid1: TDBGrid
     Left = 680
     Top = 58

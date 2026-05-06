@@ -8,7 +8,8 @@ uses
   Vcl.Styles,
   Unit3 in 'Unit3.pas' {dm_data: TDataModule},
   Unit2 in 'Unit2.pas' {Form2},
-  Unit4 in 'Unit4.pas' {Form4};
+  Unit4 in 'Unit4.pas' {Form4},
+  Unit5 in 'Unit5.pas' {Form6};
 
 {$R *.res}
 
@@ -19,7 +20,6 @@ begin
   Application.CreateForm(Tdm_data, dm_data);
   Application.CreateForm(TForm1, Form1);
   Application.CreateForm(TForm2, Form2);
-
   if Form2.ShowModal = mrOk then
   begin
     Application.CreateForm(TForm4, Form4);

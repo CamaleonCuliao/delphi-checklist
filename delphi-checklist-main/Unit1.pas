@@ -31,6 +31,7 @@ type
     btnRecargar: TSpeedButton;
     MemoNotas: TMemo;
     LblNotas: TLabel;
+    btnVisorDatos: TSpeedButton;
 
     procedure AbrirListaClick(Sender: TObject);
     procedure mostrarListasCreadas(SubMenuItem: TMenuItem);
@@ -56,6 +57,7 @@ type
     procedure CargarNotasProyecto;
     procedure insertarNuevaNota(Sender: TObject);
     procedure borrarNota(Sender: TObject);
+    procedure btnVisorDatosClick(Sender: TObject);
 
   private
     NodoSeleccionado: TTreeNode;
@@ -79,7 +81,7 @@ var
 implementation
 
 uses
-  Unit2, Unit4;
+  Unit2, Unit4, Unit5;
 
 {$R *.dfm}
 
@@ -797,6 +799,22 @@ begin
     dm_data.FDQuery7.Open;
   end;
   CargarNotasProyecto;
+end;
+
+{
+  Procedure que abre el formulario visor de datos en modo modal.
+  Se crea bajo demanda para garantizar que la conexion ya esta activa.
+}
+procedure TForm1.btnVisorDatosClick(Sender: TObject);
+var
+  Visor: TForm5;
+begin
+  Visor := TForm5.Create(Application);
+  try
+    Visor.ShowModal;
+  finally
+    Visor.Free;
+  end;
 end;
 
 procedure TForm1.CargarNotasProyecto;

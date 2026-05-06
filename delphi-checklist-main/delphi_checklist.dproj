@@ -138,6 +138,13 @@
             <Form>Form2</Form>
             <FormType>dfm</FormType>
         </DCCReference>
+        <DCCReference Include="Unit4.pas">
+            <Form>Form4</Form>
+        </DCCReference>
+        <DCCReference Include="Unit5.pas">
+            <Form>Form6</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
