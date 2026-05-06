@@ -10,8 +10,10 @@ object Form1: TForm1
   Font.Height = -12
   Font.Name = 'Segoe UI'
   Font.Style = []
+  GlassFrame.Enabled = True
   Menu = MainMenu1
   OnCreate = FormCreate
+  OnDestroy = FormDestroy
   TextHeight = 15
   object btnAbrirProyects: TSpeedButton
     Left = 1232
@@ -53,6 +55,7 @@ object Form1: TForm1
     Top = 58
     Width = 611
     Height = 383
+    DataSource = dm_data.DataSource2
     TabOrder = 0
     TitleFont.Charset = DEFAULT_CHARSET
     TitleFont.Color = clWindowText
@@ -96,8 +99,8 @@ object Form1: TForm1
     ParentBackground = False
     TabOrder = 2
     object TreeView1: TTreeView
-      Left = 0
-      Top = 24
+      Left = 8
+      Top = 8
       Width = 609
       Height = 466
       Indent = 19

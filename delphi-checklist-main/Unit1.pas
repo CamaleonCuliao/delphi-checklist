@@ -13,7 +13,8 @@ uses
   FireDAC.Comp.Client, FireDAC.Phys.MySQL, FireDAC.Phys.MySQLDef,
   FireDAC.Stan.Param, FireDAC.DatS, FireDAC.DApt.Intf, FireDAC.DApt, Vcl.Grids,
   Vcl.DBGrids, FireDAC.Comp.DataSet, Vcl.ExtCtrls, Vcl.Buttons, Vcl.WinXCtrls,
-  Vcl.Themes, System.UITypes, System.ImageList, Vcl.ImgList;
+  Vcl.Themes, System.UITypes, System.ImageList, Vcl.ImgList,
+  System.Generics.Collections;  // <-- añadido
 
 type
   TForm1 = class(TForm)
@@ -34,6 +35,7 @@ type
     procedure AbrirListaClick(Sender: TObject);
     procedure mostrarListasCreadas(SubMenuItem: TMenuItem);
     procedure FormCreate(Sender: TObject);
+    procedure FormDestroy(Sender: TObject);
     procedure ToggleSwitch1Click(Sender: TObject);
     procedure TreeViewClick(Sender: TObject);
     procedure pmAnadirClick(Sender: TObject);
@@ -60,6 +62,11 @@ type
     NodoArrastrado: TTreeNode;
     TituloListaActual: String;
     EsNotaActual: Boolean;
+    FItemVersions: TDictionary<Integer, Integer>;
+    procedure MarcarHijosRecursivo(Nodo: TTreeNode; Marcado: Boolean;
+      Query: TFDQuery);
+    procedure RecargarListaActual;
+    procedure ActualizarVersionItem(IdItem: Integer; NuevaVersion: Integer);
   public
     procedure RecargarMenuListas;
     procedure insertarLista(nombre: String);
@@ -72,7 +79,7 @@ var
 implementation
 
 uses
-  Unit2, Unit4,  Vcl.Imaging.pngimage, System.Types;
+  Unit2, Unit4;
 
 {$R *.dfm}
 
@@ -80,13 +87,12 @@ procedure TForm1.FormCreate(Sender: TObject);
 var
   MenuItem: TMenuItem;
   SubMenuItem: TMenuItem;
-  Png: TPngImage;
-  Bmp: TBitmap;
 begin
   Self.Menu := MainMenu1;
   dm_data.FDConnection1.Connected := True;
   WindowState := wsMaximized;
-  Png := TPngImage.Create;
+
+  FItemVersions := TDictionary<Integer, Integer>.Create;
 
   TreeView1.OnClick := TreeViewClick;
   TreeView1.OnMouseDown := TreeViewMouseDown;
@@ -168,6 +174,13 @@ begin
     Width := 125;
   end;
 
+  DBGrid1.Options := DBGrid1.Options - [dgEditing];
+
+end;
+
+procedure TForm1.FormDestroy(Sender: TObject);
+begin
+  FItemVersions.Free;
 end;
 
 {
@@ -184,6 +197,7 @@ begin
   TreeView1.CheckBoxes := True;
 
   TreeView1.Items.Clear;
+  FItemVersions.Clear;
 
   dm_data.FDQuery4.Close;
   if Trim(nombre) = '' then
@@ -227,6 +241,8 @@ begin
         dm_data.FDQuery1.FieldByName('texto').AsString);
       NodoPadre.Checked := dm_data.FDQuery1.FieldByName('completado').AsBoolean;
       NodoPadre.Data := Pointer(dm_data.FDQuery1.FieldByName('id').AsInteger);
+      FItemVersions.Add(dm_data.FDQuery1.FieldByName('id').AsInteger,
+        dm_data.FDQuery1.FieldByName('version').AsInteger);
     end
     else
     begin
@@ -251,6 +267,8 @@ begin
 
       NodoHijo.Checked := dm_data.FDQuery1.FieldByName('completado').AsBoolean;
       NodoHijo.Data := Pointer(dm_data.FDQuery1.FieldByName('id').AsInteger);
+      FItemVersions.Add(dm_data.FDQuery1.FieldByName('id').AsInteger,
+        dm_data.FDQuery1.FieldByName('version').AsInteger);
     end;
 
     dm_data.FDQuery1.Next;
@@ -263,24 +281,37 @@ end;
 
 {
   Procedure recursiva que marca todos los hijos de un nodo
+  Ahora con manejo de versión optimista dentro de una transacción.
 }
-procedure MarcarHijosRecursivo(Nodo: TTreeNode; Marcado: Boolean;
+procedure TForm1.MarcarHijosRecursivo(Nodo: TTreeNode; Marcado: Boolean;
   Query: TFDQuery);
 var
   Hijo: TTreeNode;
+  OldVersion: Integer;
 begin
+  OldVersion := FItemVersions[Integer(Nodo.Data)];
+
   Nodo.Checked := Marcado;
 
   Query.Close;
-  Query.SQL.Text := 'UPDATE item SET ' + '  completado = :completado, ' +
-    '  fecha_completado = :fecha ' + 'WHERE id = :id';
+  Query.SQL.Text := 'UPDATE item SET ' +
+    '  completado = :completado, ' +
+    '  fecha_completado = :fecha, ' +
+    '  version = version + 1 ' +
+    'WHERE id = :id AND version = :old_version';
   Query.ParamByName('completado').AsBoolean := Marcado;
   if Marcado then
     Query.ParamByName('fecha').AsDateTime := Now
   else
     Query.ParamByName('fecha').Clear;
   Query.ParamByName('id').AsInteger := Integer(Nodo.Data);
+  Query.ParamByName('old_version').AsInteger := OldVersion;
   Query.ExecSQL;
+
+  if Query.RowsAffected = 0 then
+    raise Exception.Create('Conflicto de versión en item ' + IntToStr(Integer(Nodo.Data)));
+
+  FItemVersions[Integer(Nodo.Data)] := OldVersion + 1;
 
   Hijo := Nodo.getFirstChild;
   while Hijo <> nil do
@@ -309,9 +340,21 @@ begin
   if Nodo = nil then
     Exit;
 
-  MarcarHijosRecursivo(Nodo, Nodo.Checked, dm_data.FDQuery2);
-  RegistrarHistorial(Integer(Nodo.Data), 'COMPLETADO',
-    BoolToStr(not Nodo.Checked, True));
+  dm_data.FDConnection1.StartTransaction;
+  try
+    MarcarHijosRecursivo(Nodo, Nodo.Checked, dm_data.FDQuery2);
+    RegistrarHistorial(Integer(Nodo.Data), 'COMPLETADO',
+      BoolToStr(not Nodo.Checked, True));
+    dm_data.FDConnection1.Commit;
+  except
+    on E: Exception do
+    begin
+      dm_data.FDConnection1.Rollback;
+      ShowMessage('No se pudo aplicar el cambio. Otro usuario modificó algún elemento.' + sLineBreak +
+        E.Message);
+      RecargarListaActual;
+    end;
+  end;
 end;
 
 {
@@ -359,19 +402,15 @@ begin
   dm_data.FDQuery3.Close;
 end;
 
-// *************************
-// *** PROCEDIMIENTO CORREGIDO ***
 procedure TForm1.AbrirListaClick(Sender: TObject);
 var
   Item: TMenuItem;
 begin
   Item := TMenuItem(Sender);
   Item.Caption := StringReplace(Item.Caption, '&', '', [rfReplaceAll]);
-  // Guardamos la lista actual para poder recargarla después
   UltimoNombreLista := Item.Caption;
   insertarLista(UltimoNombreLista);
 end;
-// *************************
 
 {
   Procedure que detecta el clic derecho y guarda el nodo seleccionado
@@ -416,8 +455,8 @@ begin
 
   dm_data.FDQuery2.Close;
   dm_data.FDQuery2.SQL.Text :=
-    'INSERT INTO item (id_lista, id_item_padre, texto, completado) ' +
-    'VALUES (:id_lista, :id_padre, :texto, 0)';
+    'INSERT INTO item (id_lista, id_item_padre, texto, completado, version) ' +
+    'VALUES (:id_lista, :id_padre, :texto, 0, 0)';
   dm_data.FDQuery2.ParamByName('id_lista').AsInteger := IdListaActual;
   dm_data.FDQuery2.ParamByName('id_padre').AsInteger := IdPadre;
   dm_data.FDQuery2.ParamByName('texto').AsString := Texto;
@@ -434,6 +473,7 @@ begin
   NodoNuevo := TreeView1.Items.AddChild(NodoSeleccionado, Texto);
   NodoNuevo.Checked := False;
   NodoNuevo.Data := Pointer(IdNuevo);
+  FItemVersions.Add(IdNuevo, 0);
   NodoSeleccionado.Expand(False);
 end;
 
@@ -442,12 +482,13 @@ end;
 }
 procedure TForm1.pmEliminarClick(Sender: TObject);
 var
-  IdItem: Integer;
+  IdItem, OldVersion: Integer;
 begin
   if NodoSeleccionado = nil then
     Exit;
 
   IdItem := Integer(NodoSeleccionado.Data);
+  OldVersion := FItemVersions[IdItem];
 
   if MessageDlg('¿Eliminar "' + NodoSeleccionado.Text + '" y todos sus hijos?',
     mtConfirmation, [mbYes, mbNo], 0) = mrNo then
@@ -456,10 +497,19 @@ begin
   RegistrarHistorial(IdItem, 'BORRADO', NodoSeleccionado.Text);
 
   dm_data.FDQuery2.Close;
-  dm_data.FDQuery2.SQL.Text := 'DELETE FROM item WHERE id = :id';
+  dm_data.FDQuery2.SQL.Text := 'DELETE FROM item WHERE id = :id AND version = :old_version';
   dm_data.FDQuery2.ParamByName('id').AsInteger := IdItem;
+  dm_data.FDQuery2.ParamByName('old_version').AsInteger := OldVersion;
   dm_data.FDQuery2.ExecSQL;
 
+  if dm_data.FDQuery2.RowsAffected = 0 then
+  begin
+    ShowMessage('El elemento fue modificado por otro usuario. Recargando lista...');
+    RecargarListaActual;
+    Exit;
+  end;
+
+  FItemVersions.Remove(IdItem);
   TreeView1.Items.Delete(NodoSeleccionado);
   NodoSeleccionado := nil;
 end;
@@ -470,12 +520,13 @@ end;
 procedure TForm1.pmRenombrarClick(Sender: TObject);
 var
   TextoNuevo: string;
-  IdItem: Integer;
+  IdItem, OldVersion: Integer;
 begin
   if NodoSeleccionado = nil then
     Exit;
 
   IdItem := Integer(NodoSeleccionado.Data);
+  OldVersion := FItemVersions[IdItem];
 
   TextoNuevo := InputBox('Renombrar', 'Nuevo nombre: ', NodoSeleccionado.Text);
 
@@ -487,12 +538,22 @@ begin
   RegistrarHistorial(IdItem, 'TEXTO', NodoSeleccionado.Text);
 
   dm_data.FDQuery2.Close;
-  dm_data.FDQuery2.SQL.Text := 'UPDATE item SET texto = :texto WHERE id = :id';
+  dm_data.FDQuery2.SQL.Text :=
+    'UPDATE item SET texto = :texto, version = version + 1 ' +
+    'WHERE id = :id AND version = :old_version';
   dm_data.FDQuery2.ParamByName('texto').AsString := TextoNuevo;
   dm_data.FDQuery2.ParamByName('id').AsInteger := IdItem;
+  dm_data.FDQuery2.ParamByName('old_version').AsInteger := OldVersion;
   dm_data.FDQuery2.ExecSQL;
-  dm_data.FDQuery2.Close;
 
+  if dm_data.FDQuery2.RowsAffected = 0 then
+  begin
+    ShowMessage('El elemento fue modificado por otro usuario. Recargando lista...');
+    RecargarListaActual;
+    Exit;
+  end;
+
+  FItemVersions[IdItem] := OldVersion + 1;
   NodoSeleccionado.Text := TextoNuevo;
 end;
 
@@ -520,8 +581,8 @@ begin
   dm_data.FDQuery5.ExecSQL;
 
   dm_data.FDQuery5.SQL.Text :=
-    'INSERT INTO item (id_lista, id_item_padre, texto, completado) ' +
-    'VALUES (LAST_INSERT_ID(), NULL, ''raiz'', 0)';
+    'INSERT INTO item (id_lista, id_item_padre, texto, completado, version) ' +
+    'VALUES (LAST_INSERT_ID(), NULL, ''raiz'', 0, 0)';
   dm_data.FDQuery5.ExecSQL;
   dm_data.FDQuery5.Close;
 
@@ -558,44 +619,35 @@ begin
 
   mostrarListasCreadas(SubItem);
   TreeView1.Items.Clear;
+  FItemVersions.Clear;
 end;
 
-// *************************
-// *** BOTÓN CORREGIDO ***
 procedure TForm1.btnAbrirProyectsClick(Sender: TObject);
 begin
-  Form4.ShowModal;            // abre el formulario de proyectos y espera
-  RecargarMenuListas;         // refresca el menú "Abrir..."
+  Form4.ShowModal;
+  RecargarMenuListas;
   if UltimoNombreLista <> '' then
-    insertarLista(UltimoNombreLista)  // recarga la última lista activa
+    insertarLista(UltimoNombreLista)
   else
-    insertarLista('');               // o carga la primera por defecto
+    insertarLista('');
 end;
-// *************************
 
-{
-  Procedure que acepta o rechaza el drag mientras se arrastra
-}
 procedure TForm1.TreeView1DragOver(Sender, Source: TObject; X, Y: Integer;
   State: TDragState; var Accept: Boolean);
 var
   NodoDestino: TTreeNode;
 begin
   Accept := Source = TreeView1;
-
   NodoDestino := TreeView1.GetNodeAt(X, Y);
   if NodoDestino <> nil then
     TreeView1.Selected := NodoDestino;
 end;
 
-{
-  Procedure que ejecuta el drop cuando se suelta el nodo
-}
 procedure TForm1.TreeView1DragDrop(Sender, Source: TObject; X, Y: Integer);
 var
   NodoDestino: TTreeNode;
   NodoHijo: TTreeNode;
-  i: Integer;
+  i, OldVersion: Integer;
 begin
   NodoDestino := TreeView1.GetNodeAt(X, Y);
 
@@ -614,37 +666,62 @@ begin
     NodoHijo := NodoHijo.Parent;
   end;
 
-  NodoArrastrado.MoveTo(NodoDestino, naAddChild);
-  NodoDestino.Expand(False);
-
-  dm_data.FDQuery2.Close;
-  dm_data.FDQuery2.SQL.Text :=
-    'UPDATE item SET id_item_padre = :nuevo_padre WHERE id = :id';
-  dm_data.FDQuery2.ParamByName('nuevo_padre').AsInteger :=
-    Integer(NodoDestino.Data);
-  dm_data.FDQuery2.ParamByName('id').AsInteger := Integer(NodoArrastrado.Data);
-  dm_data.FDQuery2.ExecSQL;
-
-  NodoHijo := NodoDestino.getFirstChild;
-  i := 1;
-  while NodoHijo <> nil do
-  begin
+  dm_data.FDConnection1.StartTransaction;
+  try
+    OldVersion := FItemVersions[Integer(NodoArrastrado.Data)];
     dm_data.FDQuery2.Close;
     dm_data.FDQuery2.SQL.Text :=
-      'UPDATE item SET orden = :orden WHERE id = :id';
-    dm_data.FDQuery2.ParamByName('orden').AsInteger := i;
-    dm_data.FDQuery2.ParamByName('id').AsInteger := Integer(NodoHijo.Data);
+      'UPDATE item SET id_item_padre = :nuevo_padre, version = version + 1 ' +
+      'WHERE id = :id AND version = :old_version';
+    dm_data.FDQuery2.ParamByName('nuevo_padre').AsInteger := Integer(NodoDestino.Data);
+    dm_data.FDQuery2.ParamByName('id').AsInteger := Integer(NodoArrastrado.Data);
+    dm_data.FDQuery2.ParamByName('old_version').AsInteger := OldVersion;
     dm_data.FDQuery2.ExecSQL;
-    Inc(i);
-    NodoHijo := NodoHijo.getNextSibling;
+
+    if dm_data.FDQuery2.RowsAffected = 0 then
+      raise Exception.Create('Conflicto de versión al mover ítem');
+
+    FItemVersions[Integer(NodoArrastrado.Data)] := OldVersion + 1;
+
+    NodoHijo := NodoDestino.getFirstChild;
+    i := 1;
+    while NodoHijo <> nil do
+    begin
+      OldVersion := FItemVersions[Integer(NodoHijo.Data)];
+      dm_data.FDQuery2.Close;
+      dm_data.FDQuery2.SQL.Text :=
+        'UPDATE item SET orden = :orden, version = version + 1 ' +
+        'WHERE id = :id AND version = :old_version';
+      dm_data.FDQuery2.ParamByName('orden').AsInteger := i;
+      dm_data.FDQuery2.ParamByName('id').AsInteger := Integer(NodoHijo.Data);
+      dm_data.FDQuery2.ParamByName('old_version').AsInteger := OldVersion;
+      dm_data.FDQuery2.ExecSQL;
+
+      if dm_data.FDQuery2.RowsAffected = 0 then
+        raise Exception.Create('Conflicto de versión al reordenar');
+
+      FItemVersions[Integer(NodoHijo.Data)] := OldVersion + 1;
+      Inc(i);
+      NodoHijo := NodoHijo.getNextSibling;
+    end;
+
+    dm_data.FDConnection1.Commit;
+
+    NodoArrastrado.MoveTo(NodoDestino, naAddChild);
+    NodoDestino.Expand(False);
+  except
+    on E: Exception do
+    begin
+      dm_data.FDConnection1.Rollback;
+      ShowMessage('Conflicto al reorganizar: ' + E.Message + sLineBreak +
+        'Se recargará la lista.');
+      RecargarListaActual;
+    end;
   end;
 
   NodoArrastrado := nil;
 end;
 
-{
-  Recarga el menú desplegable de listas
-}
 procedure TForm1.RecargarMenuListas;
 var
   SubItem: TMenuItem;
@@ -657,9 +734,6 @@ begin
   mostrarListasCreadas(SubItem);
 end;
 
-{
-  Procedure que registra un cambio en la tabla historial
-}
 procedure TForm1.RegistrarHistorial(IdItem: Integer; TipoCambio: String;
   DatoAnterior: String);
 begin
@@ -696,9 +770,6 @@ begin
   DBGrid1.DataSource := dm_data.DataSource2;
 end;
 
-{
-  Procedure para recargar listas e historial
-}
 procedure TForm1.btnRecargarClick(Sender: TObject);
 begin
   RecargarMenuListas;
@@ -708,7 +779,6 @@ begin
   else
     insertarLista(TituloListaActual);
 
-  // Recargar el historial de la lista activa sin necesidad de tocar un nodo
   if IdListaActual > 0 then
   begin
     dm_data.FDQuery7.Close;
@@ -729,11 +799,6 @@ begin
   CargarNotasProyecto;
 end;
 
-{
-  Procedure que carga las notas del proyecto activo en el MemoNotas.
-  Consulta todas las listas con ES_NOTA = 1 del proyecto actual
-  y muestra su título y descripción agrupados.
-}
 procedure TForm1.CargarNotasProyecto;
 begin
   if IdProyectoActual = 0 then
@@ -765,11 +830,6 @@ begin
   dm_data.FDQuery8.Close;
 end;
 
-{
-  Procedure que inserta una nueva nota en la base de datos con ES_NOTA = 1.
-  Pide al usuario el título y el contenido mediante InputBox
-  y recarga el MemoNotas al terminar.
-}
 procedure TForm1.insertarNuevaNota(Sender: TObject);
 var
   Titulo, Contenido: String;
@@ -793,10 +853,6 @@ begin
   CargarNotasProyecto;
 end;
 
-{
-  Procedure que elimina una nota del proyecto activo por su título.
-  Solo borra listas con ES_NOTA = 1 para no afectar a las listas de tareas.
-}
 procedure TForm1.borrarNota(Sender: TObject);
 var
   Titulo: String;
@@ -806,13 +862,30 @@ begin
     Exit;
 
   dm_data.FDQuery5.Close;
-  dm_data.FDQuery5.SQL.Text :='DELETE FROM lista WHERE titulo = :titulo ' + 'AND id_proyecto = :id_proyecto AND ES_NOTA = 1';
+  dm_data.FDQuery5.SQL.Text :=
+    'DELETE FROM lista WHERE titulo = :titulo ' +
+    'AND id_proyecto = :id_proyecto AND ES_NOTA = 1';
   dm_data.FDQuery5.ParamByName('titulo').AsString := Titulo;
   dm_data.FDQuery5.ParamByName('id_proyecto').AsInteger := IdProyectoActual;
   dm_data.FDQuery5.ExecSQL;
   dm_data.FDQuery5.Close;
 
   CargarNotasProyecto;
+end;
+
+// Métodos privados auxiliares de concurrencia optimista
+
+procedure TForm1.RecargarListaActual;
+begin
+  if TituloListaActual <> '' then
+    insertarLista(TituloListaActual)
+  else
+    insertarLista('');
+end;
+
+procedure TForm1.ActualizarVersionItem(IdItem: Integer; NuevaVersion: Integer);
+begin
+  FItemVersions[IdItem] := NuevaVersion;
 end;
 
 end.
