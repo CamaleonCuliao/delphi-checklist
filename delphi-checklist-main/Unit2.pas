@@ -177,7 +177,7 @@ begin
   Email    := editEmailReg.Text;
   Password := editPasswordReg.Text;
 
-  // Validar campos vacíps
+  // Validar campos vacíos
   if (Trim(Nombre) = '') or (Trim(Email) = '') or (Trim(Password) = '') then
   begin
     ShowMessage('Rellena todos los campos');
@@ -221,7 +221,22 @@ begin
   end;
   dm_data.FDQuery2.Close;
 
-  //Insertar nuevo usuario
+  // Verificar que el nombre de usuario no exista
+  dm_data.FDQuery2.Close;
+  dm_data.FDQuery2.SQL.Text :=
+    'SELECT id FROM usuarios WHERE nombre = :nombre';
+  dm_data.FDQuery2.ParamByName('nombre').AsString := Nombre;
+  dm_data.FDQuery2.Open;
+
+  if not dm_data.FDQuery2.IsEmpty then
+  begin
+    ShowMessage('El nombre de usuario ya está en uso. Elige otro.');
+    dm_data.FDQuery2.Close;
+    Exit;
+  end;
+  dm_data.FDQuery2.Close;
+
+  // Insertar nuevo usuario
   dm_data.FDConnection1.Connected := True;
   dm_data.FDQuery2.Close;
   dm_data.FDQuery2.SQL.Text :=
