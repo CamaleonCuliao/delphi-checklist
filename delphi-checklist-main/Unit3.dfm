@@ -76,4 +76,9 @@ object dm_data: Tdm_data
     Left = 568
     Top = 96
   end
+  object FDQueryAux: TFDQuery
+    Connection = FDConnection1
+    Left = 504
+    Top = 216
+  end
 end
