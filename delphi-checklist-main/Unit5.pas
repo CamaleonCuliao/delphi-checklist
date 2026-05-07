@@ -1,4 +1,4 @@
-unit Unit5;
+﻿unit Unit5;
 
 interface
 
@@ -48,27 +48,27 @@ type
     procedure FormCreate(Sender: TObject);
   private
     // Tab 1: Usuarios → Proyectos
-    QUsuarios:    TFDQuery;
-    QProyectosU:  TFDQuery;
-    DSUsuarios:   TDataSource;
+    QUsuarios: TFDQuery;
+    QProyectosU: TFDQuery;
+    DSUsuarios: TDataSource;
     DSProyectosU: TDataSource;
 
     // Tab 2: Proyectos → Listas
-    QProyectos:   TFDQuery;
-    QListasP:     TFDQuery;
-    DSProyectos:  TDataSource;
-    DSListasP:    TDataSource;
+    QProyectos: TFDQuery;
+    QListasP: TFDQuery;
+    DSProyectos: TDataSource;
+    DSListasP: TDataSource;
 
     // Tab 3: Listas → Ítems
-    QListas:      TFDQuery;
-    QItemsL:      TFDQuery;
-    DSListas:     TDataSource;
-    DSItemsL:     TDataSource;
+    QListas: TFDQuery;
+    QItemsL: TFDQuery;
+    DSListas: TDataSource;
+    DSItemsL: TDataSource;
 
     // Tab 4: Ítems → Historial
-    QItems:       TFDQuery;
-    QHistorialI:  TFDQuery;
-    DSItems:      TDataSource;
+    QItems: TFDQuery;
+    QHistorialI: TFDQuery;
+    DSItems: TDataSource;
     DSHistorialI: TDataSource;
 
     procedure UsuariosCambia(Sender: TObject; Field: TField);
@@ -93,9 +93,10 @@ uses Unit4;
 procedure TForm5.UsuariosCambia(Sender: TObject; Field: TField);
 begin
   QProyectosU.Close;
-  if QUsuarios.IsEmpty then Exit;
-  QProyectosU.ParamByName('id_usuario').AsInteger :=
-    QUsuarios.FieldByName('id').AsInteger;
+  if QUsuarios.IsEmpty then
+    Exit;
+  QProyectosU.ParamByName('id_usuario').AsInteger := QUsuarios.FieldByName('id')
+    .AsInteger;
   QProyectosU.Open;
 end;
 
@@ -105,9 +106,10 @@ end;
 procedure TForm5.ProyectosCambia(Sender: TObject; Field: TField);
 begin
   QListasP.Close;
-  if QProyectos.IsEmpty then Exit;
-  QListasP.ParamByName('id_proyecto').AsInteger :=
-    QProyectos.FieldByName('id').AsInteger;
+  if QProyectos.IsEmpty then
+    Exit;
+  QListasP.ParamByName('id_proyecto').AsInteger := QProyectos.FieldByName('id')
+    .AsInteger;
   QListasP.Open;
 end;
 
@@ -117,9 +119,10 @@ end;
 procedure TForm5.ListasCambia(Sender: TObject; Field: TField);
 begin
   QItemsL.Close;
-  if QListas.IsEmpty then Exit;
-  QItemsL.ParamByName('id_lista').AsInteger :=
-    QListas.FieldByName('id').AsInteger;
+  if QListas.IsEmpty then
+    Exit;
+  QItemsL.ParamByName('id_lista').AsInteger := QListas.FieldByName('id')
+    .AsInteger;
   QItemsL.Open;
 end;
 
@@ -129,9 +132,10 @@ end;
 procedure TForm5.ItemsCambia(Sender: TObject; Field: TField);
 begin
   QHistorialI.Close;
-  if QItems.IsEmpty then Exit;
-  QHistorialI.ParamByName('id_item').AsInteger :=
-    QItems.FieldByName('id').AsInteger;
+  if QItems.IsEmpty then
+    Exit;
+  QHistorialI.ParamByName('id_item').AsInteger := QItems.FieldByName('id')
+    .AsInteger;
   QHistorialI.Open;
 end;
 
@@ -140,14 +144,23 @@ end;
   al crear el formulario. Se crea bajo demanda desde Unit1 para garantizar
   que la conexion a la base de datos ya esta activa.
   Relaciones maestro/detalle:
-    Tab 1: USUARIOS    -> PROYECTO   (un usuario tiene varios proyectos)
-    Tab 2: PROYECTO    -> LISTA      (un proyecto tiene varias listas)
-    Tab 3: LISTA       -> ITEM       (una lista tiene varios items)
-    Tab 4: ITEM        -> HISTORIAL  (un item tiene varios registros de historial)
+  Tab 1: USUARIOS    -> PROYECTO   (un usuario tiene varios proyectos)
+  Tab 2: PROYECTO    -> LISTA      (un proyecto tiene varias listas)
+  Tab 3: LISTA       -> ITEM       (una lista tiene varios items)
+  Tab 4: ITEM        -> HISTORIAL  (un item tiene varios registros de historial)
 }
 procedure TForm5.FormCreate(Sender: TObject);
 begin
   dm_data.FDConnection1.Connected := True;
+
+  DBGrid1.Options := DBGrid1.Options - [dgEditing];
+  DBGrid2.Options := DBGrid1.Options - [dgEditing];
+  DBGrid3.Options := DBGrid1.Options - [dgEditing];
+  DBGrid4.Options := DBGrid1.Options - [dgEditing];
+  DBGrid5.Options := DBGrid1.Options - [dgEditing];
+  DBGrid6.Options := DBGrid1.Options - [dgEditing];
+  DBGrid7.Options := DBGrid1.Options - [dgEditing];
+  DBGrid8.Options := DBGrid1.Options - [dgEditing];
 
   // -----------------------------------------------
   // TAB 1: Usuarios (maestro) → Proyectos (detalle)
@@ -169,9 +182,9 @@ begin
   DSProyectosU := TDataSource.Create(Self);
   DSProyectosU.DataSet := QProyectosU;
 
-  DBGrid1.DataSource      := DSUsuarios;
+  DBGrid1.DataSource := DSUsuarios;
   DBNavigator1.DataSource := DSUsuarios;
-  DBGrid2.DataSource      := DSProyectosU;
+  DBGrid2.DataSource := DSProyectosU;
   DBNavigator2.DataSource := DSProyectosU;
 
   QUsuarios.Open;
@@ -197,9 +210,9 @@ begin
   DSListasP := TDataSource.Create(Self);
   DSListasP.DataSet := QListasP;
 
-  DBGrid3.DataSource      := DSProyectos;
+  DBGrid3.DataSource := DSProyectos;
   DBNavigator3.DataSource := DSProyectos;
-  DBGrid4.DataSource      := DSListasP;
+  DBGrid4.DataSource := DSListasP;
   DBNavigator4.DataSource := DSListasP;
 
   QProyectos.Open;
@@ -225,9 +238,9 @@ begin
   DSItemsL := TDataSource.Create(Self);
   DSItemsL.DataSet := QItemsL;
 
-  DBGrid5.DataSource      := DSListas;
+  DBGrid5.DataSource := DSListas;
   DBNavigator5.DataSource := DSListas;
-  DBGrid6.DataSource      := DSItemsL;
+  DBGrid6.DataSource := DSItemsL;
   DBNavigator6.DataSource := DSItemsL;
 
   QListas.Open;
@@ -237,8 +250,7 @@ begin
   // -----------------------------------------------
   QItems := TFDQuery.Create(Self);
   QItems.Connection := dm_data.FDConnection1;
-  QItems.SQL.Text :=
-    'SELECT id, texto, completado FROM item ORDER BY id';
+  QItems.SQL.Text := 'SELECT id, texto, completado FROM item ORDER BY id';
 
   DSItems := TDataSource.Create(Self);
   DSItems.DataSet := QItems;
@@ -246,19 +258,19 @@ begin
 
   QHistorialI := TFDQuery.Create(Self);
   QHistorialI.Connection := dm_data.FDConnection1;
-  QHistorialI.SQL.Text :=
-    'SELECT id, tipo_cambio, dato_anterior, fecha_cambio ' +
-    'FROM historial WHERE id_item = :id_item ORDER BY fecha_cambio DESC';
+  QHistorialI.SQL.Text := 'SELECT id, tipo_cambio, dato_anterior, fecha_cambio '
+    + 'FROM historial WHERE id_item = :id_item ORDER BY fecha_cambio DESC';
 
   DSHistorialI := TDataSource.Create(Self);
   DSHistorialI.DataSet := QHistorialI;
 
-  DBGrid7.DataSource      := DSItems;
+  DBGrid7.DataSource := DSItems;
   DBNavigator7.DataSource := DSItems;
-  DBGrid8.DataSource      := DSHistorialI;
+  DBGrid8.DataSource := DSHistorialI;
   DBNavigator8.DataSource := DSHistorialI;
 
   QItems.Open;
+
 end;
 
 end.

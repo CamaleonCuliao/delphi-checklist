@@ -18,7 +18,7 @@ object Form5: TForm5
     Top = 0
     Width = 1000
     Height = 650
-    ActivePage = tabUsuarios
+    ActivePage = tabItems
     Align = alClient
     TabOrder = 0
     object tabUsuarios: TTabSheet

@@ -111,6 +111,8 @@ begin
   TreeView1.OnDragOver := TreeView1DragOver;
   TreeView1.OnDragDrop := TreeView1DragDrop;
 
+  DBGrid1.Options := DBGrid1.Options - [dgEditing];
+
   MenuItem := TMenuItem.Create(MainMenu1);
   MenuItem.Caption := 'Listas';
   MainMenu1.Items.Add(MenuItem);
@@ -177,7 +179,7 @@ begin
     Width := 125;
   end;
 
-  DBGrid1.Options := DBGrid1.Options - [dgEditing];
+
 end;
 
 procedure TForm1.FormDestroy(Sender: TObject);
