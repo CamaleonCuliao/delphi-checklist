@@ -69,10 +69,12 @@ type
       Query: TFDQuery; Forzar: Boolean = False);
     procedure RecargarListaActual;
     procedure ActualizarVersionItem(IdItem: Integer; NuevaVersion: Integer);
-    function ObtenerUltimoCambio(IdItem: Integer; out Usuario, Accion: string; out Fecha: TDateTime): Boolean;
+    function ObtenerUltimoCambio(IdItem: Integer; out Usuario, Accion: string;
+      out Fecha: TDateTime): Boolean;
   public
     procedure RecargarMenuListas;
     procedure insertarLista(nombre: String);
+    procedure CargarHistorial;
   end;
 
 var
@@ -274,9 +276,11 @@ begin
   dm_data.FDQuery1.Close;
   TreeView1.FullExpand;
   CargarNotasProyecto;
+  CargarHistorial;
 end;
 
-function TForm1.ObtenerUltimoCambio(IdItem: Integer; out Usuario, Accion: string; out Fecha: TDateTime): Boolean;
+function TForm1.ObtenerUltimoCambio(IdItem: Integer;
+  out Usuario, Accion: string; out Fecha: TDateTime): Boolean;
 begin
   Result := False;
   Usuario := '';
@@ -285,19 +289,17 @@ begin
   // Usamos FDQueryAux, que debe estar definido en dm_data.
   dm_data.FDQueryAux.Close;
   dm_data.FDQueryAux.SQL.Text :=
-    'SELECT u.nombre, h.tipo_cambio, h.fecha_cambio ' +
-    'FROM historial h ' +
-    'JOIN usuarios u ON h.id_usuario = u.id ' +
-    'WHERE h.id_item = :id_item ' +
+    'SELECT u.nombre, h.tipo_cambio, h.fecha_cambio ' + 'FROM historial h ' +
+    'JOIN usuarios u ON h.id_usuario = u.id ' + 'WHERE h.id_item = :id_item ' +
     'ORDER BY h.fecha_cambio DESC LIMIT 1';
   dm_data.FDQueryAux.ParamByName('id_item').AsInteger := IdItem;
   dm_data.FDQueryAux.Open;
   if not dm_data.FDQueryAux.IsEmpty then
   begin
     Usuario := dm_data.FDQueryAux.FieldByName('nombre').AsString;
-    Accion  := dm_data.FDQueryAux.FieldByName('tipo_cambio').AsString;
-    Fecha   := dm_data.FDQueryAux.FieldByName('fecha_cambio').AsDateTime;
-    Result  := True;
+    Accion := dm_data.FDQueryAux.FieldByName('tipo_cambio').AsString;
+    Fecha := dm_data.FDQueryAux.FieldByName('fecha_cambio').AsDateTime;
+    Result := True;
   end;
   dm_data.FDQueryAux.Close;
 end;
@@ -316,19 +318,15 @@ begin
   if Forzar then
   begin
     Query.Close;
-    Query.SQL.Text := 'UPDATE item SET ' +
-      'completado = :completado, ' +
-      'fecha_completado = :fecha, ' +
-      'version = version + 1 ' +
+    Query.SQL.Text := 'UPDATE item SET ' + 'completado = :completado, ' +
+      'fecha_completado = :fecha, ' + 'version = version + 1 ' +
       'WHERE id = :id';
   end
   else
   begin
     Query.Close;
-    Query.SQL.Text := 'UPDATE item SET ' +
-      'completado = :completado, ' +
-      'fecha_completado = :fecha, ' +
-      'version = version + 1 ' +
+    Query.SQL.Text := 'UPDATE item SET ' + 'completado = :completado, ' +
+      'fecha_completado = :fecha, ' + 'version = version + 1 ' +
       'WHERE id = :id AND version = :old_version';
     Query.ParamByName('old_version').AsInteger := OldVersion;
   end;
@@ -342,10 +340,12 @@ begin
   Query.ExecSQL;
 
   if (Query.RowsAffected = 0) and (not Forzar) then
-    raise Exception.Create('Conflicto de versión en item ' + IntToStr(Integer(Nodo.Data)));
+    raise Exception.Create('Conflicto de versión en item ' +
+      IntToStr(Integer(Nodo.Data)));
 
   if Forzar and (Query.RowsAffected = 0) then
-    raise Exception.Create('El item ' + IntToStr(Integer(Nodo.Data)) + ' ha sido eliminado por otro usuario.');
+    raise Exception.Create('El item ' + IntToStr(Integer(Nodo.Data)) +
+      ' ha sido eliminado por otro usuario.');
 
   // Actualizar versión local
   if Forzar then
@@ -379,10 +379,12 @@ var
 begin
   PuntoLocal := TreeView1.ScreenToClient(Mouse.CursorPos);
   HitTest := TreeView1.GetHitTestInfoAt(PuntoLocal.X, PuntoLocal.Y);
-  if not(htOnStateIcon in HitTest) then Exit;
+  if not(htOnStateIcon in HitTest) then
+    Exit;
 
   Nodo := TreeView1.GetNodeAt(PuntoLocal.X, PuntoLocal.Y);
-  if Nodo = nil then Exit;
+  if Nodo = nil then
+    Exit;
 
   IdItem := Integer(Nodo.Data);
   dm_data.FDConnection1.StartTransaction;
@@ -400,21 +402,23 @@ begin
         // Obtener información del último cambio
         if ObtenerUltimoCambio(IdItem, Usuario, Accion, Fecha) then
         begin
-          if MessageDlg(Format(
-            'El usuario "%s" ha realizado la acción "%s" el %s.' + sLineBreak +
-            '¿Desea aplicar su cambio de todas formas?',
-            [Usuario, Accion, DateTimeToStr(Fecha)]),
-            mtConfirmation, [mbYes, mbNo], 0) = mrYes then
+          if MessageDlg
+            (Format('El usuario "%s" ha realizado la acción "%s" el %s.' +
+            sLineBreak + '¿Desea aplicar su cambio de todas formas?',
+            [Usuario, Accion, DateTimeToStr(Fecha)]), mtConfirmation,
+            [mbYes, mbNo], 0) = mrYes then
           begin
             // Reintentar forzando la escritura
             dm_data.FDConnection1.StartTransaction;
             try
               MarcarHijosRecursivo(Nodo, Nodo.Checked, dm_data.FDQuery2, True);
-              RegistrarHistorial(IdItem, 'COMPLETADO', BoolToStr(not Nodo.Checked, True));
+              RegistrarHistorial(IdItem, 'COMPLETADO',
+                BoolToStr(not Nodo.Checked, True));
               dm_data.FDConnection1.Commit;
             except
               dm_data.FDConnection1.Rollback;
-              ShowMessage('No se pudo forzar el cambio. Se recargará la lista.');
+              ShowMessage
+                ('No se pudo forzar el cambio. Se recargará la lista.');
               RecargarListaActual;
             end;
           end
@@ -423,7 +427,8 @@ begin
         end
         else
         begin
-          ShowMessage('No se pudo obtener información del conflicto. Recargando lista...');
+          ShowMessage
+            ('No se pudo obtener información del conflicto. Recargando lista...');
           RecargarListaActual;
         end;
       end
@@ -457,7 +462,7 @@ begin
   dm_data.FDConnection1.Connected := True;
   dm_data.FDQuery3.Close;
   dm_data.FDQuery3.SQL.Text :=
-  'SELECT titulo FROM lista WHERE id_proyecto = :id_proyecto AND ES_NOTA = 0';
+    'SELECT titulo FROM lista WHERE id_proyecto = :id_proyecto AND ES_NOTA = 0';
   dm_data.FDQuery3.ParamByName('id_proyecto').AsInteger := IdProyectoActual;
   dm_data.FDQuery3.Open;
 
@@ -488,7 +493,8 @@ begin
   if Button = mbLeft then
     NodoArrastrado := TreeView1.GetNodeAt(X, Y);
 
-  if Button <> mbRight then Exit;
+  if Button <> mbRight then
+    Exit;
   NodoSeleccionado := TreeView1.GetNodeAt(X, Y);
   if NodoSeleccionado = nil then
     PopupMenu1.AutoPopup := False
@@ -505,10 +511,12 @@ var
   Texto: string;
   IdPadre, IdNuevo: Integer;
 begin
-  if NodoSeleccionado = nil then Exit;
+  if NodoSeleccionado = nil then
+    Exit;
   IdPadre := Integer(NodoSeleccionado.Data);
   Texto := InputBox('Nuevo ítem', 'Escribe el nombre:', '');
-  if Trim(Texto) = '' then Exit;
+  if Trim(Texto) = '' then
+    Exit;
 
   dm_data.FDQuery2.Close;
   dm_data.FDQuery2.SQL.Text :=
@@ -532,6 +540,7 @@ begin
   NodoNuevo.Data := Pointer(IdNuevo);
   FItemVersions.Add(IdNuevo, 0);
   NodoSeleccionado.Expand(False);
+  CargarHistorial;
 end;
 
 procedure TForm1.pmEliminarClick(Sender: TObject);
@@ -540,15 +549,18 @@ var
   Usuario, Accion: string;
   Fecha: TDateTime;
 begin
-  if NodoSeleccionado = nil then Exit;
+  if NodoSeleccionado = nil then
+    Exit;
   IdItem := Integer(NodoSeleccionado.Data);
   OldVersion := FItemVersions[IdItem];
 
   if MessageDlg('¿Eliminar "' + NodoSeleccionado.Text + '" y todos sus hijos?',
-    mtConfirmation, [mbYes, mbNo], 0) = mrNo then Exit;
+    mtConfirmation, [mbYes, mbNo], 0) = mrNo then
+    Exit;
 
   dm_data.FDQuery2.Close;
-  dm_data.FDQuery2.SQL.Text := 'DELETE FROM item WHERE id = :id AND version = :old_version';
+  dm_data.FDQuery2.SQL.Text :=
+    'DELETE FROM item WHERE id = :id AND version = :old_version';
   dm_data.FDQuery2.ParamByName('id').AsInteger := IdItem;
   dm_data.FDQuery2.ParamByName('old_version').AsInteger := OldVersion;
   dm_data.FDQuery2.ExecSQL;
@@ -558,11 +570,10 @@ begin
     // Conflicto de versión
     if ObtenerUltimoCambio(IdItem, Usuario, Accion, Fecha) then
     begin
-      if MessageDlg(Format(
-        'El usuario "%s" ha realizado la acción "%s" el %s.' + sLineBreak +
-        '¿Desea eliminar el ítem de todas formas?',
-        [Usuario, Accion, DateTimeToStr(Fecha)]),
-        mtConfirmation, [mbYes, mbNo], 0) = mrYes then
+      if MessageDlg(Format('El usuario "%s" ha realizado la acción "%s" el %s.'
+        + sLineBreak + '¿Desea eliminar el ítem de todas formas?',
+        [Usuario, Accion, DateTimeToStr(Fecha)]), mtConfirmation, [mbYes, mbNo],
+        0) = mrYes then
       begin
         dm_data.FDQuery2.Close;
         dm_data.FDQuery2.SQL.Text := 'DELETE FROM item WHERE id = :id';
@@ -585,7 +596,8 @@ begin
     end
     else
     begin
-      ShowMessage('El elemento fue modificado por otro usuario. Recargando lista...');
+      ShowMessage
+        ('El elemento fue modificado por otro usuario. Recargando lista...');
       RecargarListaActual;
     end;
   end
@@ -597,6 +609,7 @@ begin
     TreeView1.Items.Delete(NodoSeleccionado);
     NodoSeleccionado := nil;
   end;
+  CargarHistorial;
 end;
 
 procedure TForm1.pmRenombrarClick(Sender: TObject);
@@ -606,13 +619,16 @@ var
   Usuario, Accion: string;
   Fecha: TDateTime;
 begin
-  if NodoSeleccionado = nil then Exit;
+  if NodoSeleccionado = nil then
+    Exit;
   IdItem := Integer(NodoSeleccionado.Data);
   OldVersion := FItemVersions[IdItem];
 
   TextoNuevo := InputBox('Renombrar', 'Nuevo nombre: ', NodoSeleccionado.Text);
-  if Trim(TextoNuevo) = '' then Exit;
-  if TextoNuevo = NodoSeleccionado.Text then Exit;
+  if Trim(TextoNuevo) = '' then
+    Exit;
+  if TextoNuevo = NodoSeleccionado.Text then
+    Exit;
 
   dm_data.FDQuery2.Close;
   dm_data.FDQuery2.SQL.Text :=
@@ -627,11 +643,10 @@ begin
   begin
     if ObtenerUltimoCambio(IdItem, Usuario, Accion, Fecha) then
     begin
-      if MessageDlg(Format(
-        'El usuario "%s" ha realizado la acción "%s" el %s.' + sLineBreak +
-        '¿Desea renombrar de todas formas?',
-        [Usuario, Accion, DateTimeToStr(Fecha)]),
-        mtConfirmation, [mbYes, mbNo], 0) = mrYes then
+      if MessageDlg(Format('El usuario "%s" ha realizado la acción "%s" el %s.'
+        + sLineBreak + '¿Desea renombrar de todas formas?',
+        [Usuario, Accion, DateTimeToStr(Fecha)]), mtConfirmation, [mbYes, mbNo],
+        0) = mrYes then
       begin
         dm_data.FDQuery2.Close;
         dm_data.FDQuery2.SQL.Text :=
@@ -642,7 +657,8 @@ begin
         dm_data.FDQuery2.ExecSQL;
         if dm_data.FDQuery2.RowsAffected = 0 then
         begin
-          ShowMessage('El ítem ha sido eliminado por otro usuario. Recargando...');
+          ShowMessage
+            ('El ítem ha sido eliminado por otro usuario. Recargando...');
           RecargarListaActual;
           Exit;
         end;
@@ -651,7 +667,8 @@ begin
         dm_data.FDQuery2.SQL.Text := 'SELECT version FROM item WHERE id = :id';
         dm_data.FDQuery2.ParamByName('id').AsInteger := IdItem;
         dm_data.FDQuery2.Open;
-        FItemVersions[IdItem] := dm_data.FDQuery2.FieldByName('version').AsInteger;
+        FItemVersions[IdItem] := dm_data.FDQuery2.FieldByName('version')
+          .AsInteger;
         dm_data.FDQuery2.Close;
 
         RegistrarHistorial(IdItem, 'TEXTO', NodoSeleccionado.Text);
@@ -662,16 +679,18 @@ begin
     end
     else
     begin
-      ShowMessage('El elemento fue modificado por otro usuario. Recargando lista...');
+      ShowMessage
+        ('El elemento fue modificado por otro usuario. Recargando lista...');
       RecargarListaActual;
     end;
   end
   else
   begin
     FItemVersions[IdItem] := OldVersion + 1;
-    RegistrarHistorial(IdItem, 'TEXTO', NodoSeleccionado.Text);
+    RegistrarHistorial(IdItem, 'RENOMBRADO', NodoSeleccionado.Text);
     NodoSeleccionado.Text := TextoNuevo;
   end;
+  CargarHistorial;
 end;
 
 procedure TForm1.insertarNuevaLista(Sender: TObject);
@@ -680,7 +699,8 @@ var
   SubItem: TMenuItem;
 begin
   Texto := InputBox('Nueva lista', 'Escribe el nombre:', '');
-  if Trim(Texto) = '' then Exit;
+  if Trim(Texto) = '' then
+    Exit;
   Descripcion := InputBox('Descripcion de la lista:', 'Escribe', '');
 
   dm_data.FDQuery5.Close;
@@ -712,7 +732,8 @@ var
   SubItem: TMenuItem;
 begin
   Texto := InputBox('Nombre de la lista a borrar:', '', '');
-  if Trim(Texto) = '' then Exit;
+  if Trim(Texto) = '' then
+    Exit;
 
   dm_data.FDQuery5.Close;
   dm_data.FDQuery5.SQL.Text :=
@@ -759,14 +780,18 @@ var
   Fecha: TDateTime;
 begin
   NodoDestino := TreeView1.GetNodeAt(X, Y);
-  if NodoDestino = nil then Exit;
-  if NodoArrastrado = nil then Exit;
-  if NodoDestino = NodoArrastrado then Exit;
+  if NodoDestino = nil then
+    Exit;
+  if NodoArrastrado = nil then
+    Exit;
+  if NodoDestino = NodoArrastrado then
+    Exit;
 
   NodoHijo := NodoDestino.Parent;
   while NodoHijo <> nil do
   begin
-    if NodoHijo = NodoArrastrado then Exit;
+    if NodoHijo = NodoArrastrado then
+      Exit;
     NodoHijo := NodoHijo.Parent;
   end;
 
@@ -778,7 +803,8 @@ begin
     dm_data.FDQuery2.SQL.Text :=
       'UPDATE item SET id_item_padre = :nuevo_padre, version = version + 1 ' +
       'WHERE id = :id AND version = :old_version';
-    dm_data.FDQuery2.ParamByName('nuevo_padre').AsInteger := Integer(NodoDestino.Data);
+    dm_data.FDQuery2.ParamByName('nuevo_padre').AsInteger :=
+      Integer(NodoDestino.Data);
     dm_data.FDQuery2.ParamByName('id').AsInteger := IdArrastrado;
     dm_data.FDQuery2.ParamByName('old_version').AsInteger := OldVersion;
     dm_data.FDQuery2.ExecSQL;
@@ -822,20 +848,21 @@ begin
       begin
         if ObtenerUltimoCambio(IdArrastrado, Usuario, Accion, Fecha) then
         begin
-          if MessageDlg(Format(
-            'El usuario "%s" ha realizado la acción "%s" el %s.' + sLineBreak +
-            '¿Desea forzar el movimiento?',
-            [Usuario, Accion, DateTimeToStr(Fecha)]),
-            mtConfirmation, [mbYes, mbNo], 0) = mrYes then
+          if MessageDlg
+            (Format('El usuario "%s" ha realizado la acción "%s" el %s.' +
+            sLineBreak + '¿Desea forzar el movimiento?', [Usuario, Accion,
+            DateTimeToStr(Fecha)]), mtConfirmation, [mbYes, mbNo], 0) = mrYes
+          then
           begin
             // Reintentar forzando
             dm_data.FDConnection1.StartTransaction;
             try
               dm_data.FDQuery2.Close;
               dm_data.FDQuery2.SQL.Text :=
-                'UPDATE item SET id_item_padre = :nuevo_padre, version = version + 1 ' +
-                'WHERE id = :id';
-              dm_data.FDQuery2.ParamByName('nuevo_padre').AsInteger := Integer(NodoDestino.Data);
+                'UPDATE item SET id_item_padre = :nuevo_padre, version = version + 1 '
+                + 'WHERE id = :id';
+              dm_data.FDQuery2.ParamByName('nuevo_padre').AsInteger :=
+                Integer(NodoDestino.Data);
               dm_data.FDQuery2.ParamByName('id').AsInteger := IdArrastrado;
               dm_data.FDQuery2.ExecSQL;
 
@@ -844,10 +871,12 @@ begin
 
               // Actualizar versión local
               dm_data.FDQuery2.Close;
-              dm_data.FDQuery2.SQL.Text := 'SELECT version FROM item WHERE id = :id';
+              dm_data.FDQuery2.SQL.Text :=
+                'SELECT version FROM item WHERE id = :id';
               dm_data.FDQuery2.ParamByName('id').AsInteger := IdArrastrado;
               dm_data.FDQuery2.Open;
-              FItemVersions[IdArrastrado] := dm_data.FDQuery2.FieldByName('version').AsInteger;
+              FItemVersions[IdArrastrado] := dm_data.FDQuery2.FieldByName
+                ('version').AsInteger;
               dm_data.FDQuery2.Close;
 
               // Reordenamiento forzado
@@ -860,14 +889,18 @@ begin
                   'UPDATE item SET orden = :orden, version = version + 1 ' +
                   'WHERE id = :id';
                 dm_data.FDQuery2.ParamByName('orden').AsInteger := i;
-                dm_data.FDQuery2.ParamByName('id').AsInteger := Integer(NodoHijo.Data);
+                dm_data.FDQuery2.ParamByName('id').AsInteger :=
+                  Integer(NodoHijo.Data);
                 dm_data.FDQuery2.ExecSQL;
 
                 dm_data.FDQuery2.Close;
-                dm_data.FDQuery2.SQL.Text := 'SELECT version FROM item WHERE id = :id';
-                dm_data.FDQuery2.ParamByName('id').AsInteger := Integer(NodoHijo.Data);
+                dm_data.FDQuery2.SQL.Text :=
+                  'SELECT version FROM item WHERE id = :id';
+                dm_data.FDQuery2.ParamByName('id').AsInteger :=
+                  Integer(NodoHijo.Data);
                 dm_data.FDQuery2.Open;
-                FItemVersions[Integer(NodoHijo.Data)] := dm_data.FDQuery2.FieldByName('version').AsInteger;
+                FItemVersions[Integer(NodoHijo.Data)] :=
+                  dm_data.FDQuery2.FieldByName('version').AsInteger;
                 dm_data.FDQuery2.Close;
 
                 Inc(i);
@@ -894,12 +927,14 @@ begin
       end
       else
       begin
-        ShowMessage('Error durante el movimiento: ' + E.Message + sLineBreak + 'Recargando...');
+        ShowMessage('Error durante el movimiento: ' + E.Message + sLineBreak +
+          'Recargando...');
         RecargarListaActual;
       end;
     end;
   end;
   NodoArrastrado := nil;
+  CargarHistorial;
 end;
 
 procedure TForm1.RecargarMenuListas;
@@ -907,7 +942,8 @@ var
   SubItem: TMenuItem;
 begin
   SubItem := TMenuItem(MainMenu1.FindComponent('mnuAbrir'));
-  if SubItem = nil then Exit;
+  if SubItem = nil then
+    Exit;
   while SubItem.Count > 0 do
     SubItem.Delete(0);
   mostrarListasCreadas(SubItem);
@@ -931,24 +967,12 @@ end;
 
 procedure TForm1.TreeView1Change(Sender: TObject; Node: TTreeNode);
 begin
-  if Node = nil then Exit;
-  if IdListaActual = 0 then Exit;
+  if Node = nil then
+    Exit;
+  if IdListaActual = 0 then
+    Exit;
 
-  dm_data.FDQuery7.Close;
-  dm_data.FDQuery7.SQL.Text :=
-    'SELECT COALESCE(i.texto, h.dato_anterior) AS item, ' +
-    'h.tipo_cambio, ' +
-    'h.dato_anterior, ' +
-    'u.nombre AS usuario, ' +
-    'h.fecha_cambio ' +
-    'FROM historial h ' +
-    'INNER JOIN usuarios u ON h.id_usuario = u.id ' +
-    'LEFT JOIN item i ON h.id_item = i.id ' +
-    'WHERE h.id_lista = :id_lista ' +
-    'ORDER BY h.fecha_cambio DESC';
-  dm_data.FDQuery7.ParamByName('id_lista').AsInteger := IdListaActual;
-  dm_data.FDQuery7.Open;
-  DBGrid1.DataSource := dm_data.DataSource2;
+  CargarHistorial;
 end;
 
 procedure TForm1.btnRecargarClick(Sender: TObject);
@@ -963,16 +987,11 @@ begin
   begin
     dm_data.FDQuery7.Close;
     dm_data.FDQuery7.SQL.Text :=
-      'SELECT COALESCE(i.texto, h.dato_anterior) AS item, ' +
-      'h.tipo_cambio, ' +
-      'h.dato_anterior, ' +
-      'u.nombre AS usuario, ' +
-      'h.fecha_cambio ' +
-      'FROM historial h ' +
-      'INNER JOIN usuarios u ON h.id_usuario = u.id ' +
-      'LEFT JOIN item i ON h.id_item = i.id ' +
-      'WHERE h.id_lista = :id_lista ' +
-      'ORDER BY h.fecha_cambio DESC';
+      'SELECT COALESCE(i.texto, h.dato_anterior) AS item, ' + 'h.tipo_cambio, '
+      + 'h.dato_anterior, ' + 'u.nombre AS usuario, ' + 'h.fecha_cambio ' +
+      'FROM historial h ' + 'INNER JOIN usuarios u ON h.id_usuario = u.id ' +
+      'LEFT JOIN item i ON h.id_item = i.id ' + 'WHERE h.id_lista = :id_lista '
+      + 'ORDER BY h.fecha_cambio DESC';
     dm_data.FDQuery7.ParamByName('id_lista').AsInteger := IdListaActual;
     dm_data.FDQuery7.Open;
   end;
@@ -989,6 +1008,7 @@ begin
   finally
     Visor.Free;
   end;
+  CargarHistorial;
 end;
 
 procedure TForm1.CargarNotasProyecto;
@@ -999,8 +1019,7 @@ begin
     Exit;
   end;
   dm_data.FDQuery8.Close;
-  dm_data.FDQuery8.SQL.Text :=
-    'SELECT titulo, descripcion FROM lista ' +
+  dm_data.FDQuery8.SQL.Text := 'SELECT titulo, descripcion FROM lista ' +
     'WHERE id_proyecto = :id_proyecto AND ES_NOTA = 1 ' +
     'ORDER BY fecha_creacion ASC';
   dm_data.FDQuery8.ParamByName('id_proyecto').AsInteger := IdProyectoActual;
@@ -1011,7 +1030,8 @@ begin
   else
     while not dm_data.FDQuery8.EOF do
     begin
-      MemoNotas.Lines.Add('=== ' + dm_data.FDQuery8.FieldByName('titulo').AsString + ' ===');
+      MemoNotas.Lines.Add('=== ' + dm_data.FDQuery8.FieldByName('titulo')
+        .AsString + ' ===');
       MemoNotas.Lines.Add(dm_data.FDQuery8.FieldByName('descripcion').AsString);
       MemoNotas.Lines.Add('');
       dm_data.FDQuery8.Next;
@@ -1024,12 +1044,13 @@ var
   Titulo, Contenido: String;
 begin
   Titulo := InputBox('Nueva nota', 'Título de la nota:', '');
-  if Trim(Titulo) = '' then Exit;
+  if Trim(Titulo) = '' then
+    Exit;
   Contenido := InputBox('Contenido:', 'Escribe el contenido:', '');
   dm_data.FDQuery5.Close;
   dm_data.FDQuery5.SQL.Text :=
-    'INSERT INTO lista (id_usuario, id_proyecto, titulo, descripcion, ES_NOTA) ' +
-    'VALUES (:id_usuario, :id_proyecto, :titulo, :descripcion, 1)';
+    'INSERT INTO lista (id_usuario, id_proyecto, titulo, descripcion, ES_NOTA) '
+    + 'VALUES (:id_usuario, :id_proyecto, :titulo, :descripcion, 1)';
   dm_data.FDQuery5.ParamByName('id_usuario').AsInteger := IdUsuarioActual;
   dm_data.FDQuery5.ParamByName('id_proyecto').AsInteger := IdProyectoActual;
   dm_data.FDQuery5.ParamByName('titulo').AsString := Titulo;
@@ -1044,10 +1065,10 @@ var
   Titulo: String;
 begin
   Titulo := InputBox('Borrar nota', 'Título de la nota a borrar:', '');
-  if Trim(Titulo) = '' then Exit;
+  if Trim(Titulo) = '' then
+    Exit;
   dm_data.FDQuery5.Close;
-  dm_data.FDQuery5.SQL.Text :=
-    'DELETE FROM lista WHERE titulo = :titulo ' +
+  dm_data.FDQuery5.SQL.Text := 'DELETE FROM lista WHERE titulo = :titulo ' +
     'AND id_proyecto = :id_proyecto AND ES_NOTA = 1';
   dm_data.FDQuery5.ParamByName('titulo').AsString := Titulo;
   dm_data.FDQuery5.ParamByName('id_proyecto').AsInteger := IdProyectoActual;
@@ -1067,6 +1088,24 @@ end;
 procedure TForm1.ActualizarVersionItem(IdItem: Integer; NuevaVersion: Integer);
 begin
   FItemVersions[IdItem] := NuevaVersion;
+end;
+
+procedure TForm1.CargarHistorial;
+begin
+  if IdListaActual = 0 then
+  begin
+    dm_data.FDQuery7.Close;
+    Exit;
+  end;
+  dm_data.FDQuery7.Close;
+  dm_data.FDQuery7.SQL.Text :=
+    'SELECT COALESCE(i.texto, h.dato_anterior) AS item, ' +
+    'h.tipo_cambio, h.dato_anterior, u.nombre AS usuario, h.fecha_cambio ' +
+    'FROM historial h ' + 'INNER JOIN usuarios u ON h.id_usuario = u.id ' +
+    'LEFT JOIN item i ON h.id_item = i.id ' + 'WHERE h.id_lista = :id_lista ' +
+    'ORDER BY h.fecha_cambio DESC';
+  dm_data.FDQuery7.ParamByName('id_lista').AsInteger := IdListaActual;
+  dm_data.FDQuery7.Open;
 end;
 
 end.
