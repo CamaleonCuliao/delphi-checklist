@@ -203,14 +203,12 @@ begin
   dm_data.FDQuery4.Close;
   if Trim(nombre) = '' then
   begin
-    dm_data.FDQuery4.SQL.Text :=
-      'SELECT id FROM lista WHERE id_proyecto = :id_proyecto LIMIT 1';
+    dm_data.FDQuery4.SQL.Text := 'SELECT id FROM lista WHERE id_proyecto = :id_proyecto AND ES_NOTA = 0 LIMIT 1';
     dm_data.FDQuery4.ParamByName('id_proyecto').AsInteger := IdProyectoActual;
   end
   else
   begin
-    dm_data.FDQuery4.SQL.Text :=
-      'SELECT id FROM lista WHERE id_proyecto = :id_proyecto AND titulo = :titulo';
+    dm_data.FDQuery4.SQL.Text := 'SELECT id FROM lista WHERE id_proyecto = :id_proyecto AND titulo = :titulo AND ES_NOTA = 0';
     dm_data.FDQuery4.ParamByName('id_proyecto').AsInteger := IdProyectoActual;
     dm_data.FDQuery4.ParamByName('titulo').AsString := Trim(nombre);
   end;
@@ -738,8 +736,7 @@ begin
     Exit;
 
   dm_data.FDQuery5.Close;
-  dm_data.FDQuery5.SQL.Text :=
-    'DELETE FROM lista WHERE titulo = :nombre AND id_proyecto = :id_proyecto';
+  dm_data.FDQuery5.SQL.Text := 'DELETE FROM lista WHERE titulo = :nombre AND id_proyecto = :id_proyecto AND ES_NOTA = 0';
   dm_data.FDQuery5.ParamByName('id_proyecto').AsInteger := IdProyectoActual;
   dm_data.FDQuery5.ParamByName('nombre').AsString := Texto;
   dm_data.FDQuery5.ExecSQL;
