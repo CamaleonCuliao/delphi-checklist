@@ -88,6 +88,14 @@ uses
 
 {$R *.dfm}
 
+{
+  Procedure de inicializacion del formulario principal
+  - Establece la conexion con la base de datos
+  - Inicializa el diccionario de versiones para el control de concurrencia
+  - Configura el TreeView con sus eventos y modo drag & drop
+  - Construye el menu de Listas dinamicamente
+  - Configura el DBGrid del historial con sus columnas
+}
 procedure TForm1.FormCreate(Sender: TObject);
 var
   MenuItem: TMenuItem;
@@ -178,15 +186,24 @@ begin
     Title.Caption := 'Fecha';
     Width := 125;
   end;
-
-
 end;
 
+{
+  Procedure que libera los recursos al cerrar el formulario
+  - Destruye el diccionario de versiones para evitar fugas de memoria
+}
 procedure TForm1.FormDestroy(Sender: TObject);
 begin
   FItemVersions.Free;
 end;
 
+{
+  Procedure que carga una lista del proyecto activo en el TreeView
+  - Si el nombre esta vacio carga la primera lista disponible del proyecto
+  - Consulta todos los items de la lista ordenados por jerarquia
+  - Reconstruye el arbol de nodos con sus checkboxes y versiones
+  - Al terminar recarga las notas y el historial
+}
 procedure TForm1.insertarLista(nombre: String);
 var
   NodoPadre, NodoHijo: TTreeNode;
@@ -279,6 +296,12 @@ begin
   CargarHistorial;
 end;
 
+{
+  Funcion que obtiene el ultimo cambio registrado en el historial para un item
+  - Consulta el historial ordenado por fecha descendente
+  - Devuelve el nombre del usuario, la accion realizada y la fecha
+  - Retorna True si encontro datos, False si el item no tiene historial
+}
 function TForm1.ObtenerUltimoCambio(IdItem: Integer;
   out Usuario, Accion: string; out Fecha: TDateTime): Boolean;
 begin
@@ -286,7 +309,6 @@ begin
   Usuario := '';
   Accion := '';
   Fecha := 0;
-  // Usamos FDQueryAux, que debe estar definido en dm_data.
   dm_data.FDQueryAux.Close;
   dm_data.FDQueryAux.SQL.Text :=
     'SELECT u.nombre, h.tipo_cambio, h.fecha_cambio ' + 'FROM historial h ' +
@@ -304,6 +326,15 @@ begin
   dm_data.FDQueryAux.Close;
 end;
 
+{
+  Procedure recursiva que marca o desmarca un nodo y todos sus hijos
+  - Comprueba la version del item antes de actualizar (control de concurrencia)
+  - Si Forzar es False: usa WHERE version = old_version para detectar conflictos
+  - Si Forzar es True: actualiza sin comprobar version (el usuario ha confirmado)
+  - Si RowsAffected = 0 sin forzar lanza una excepcion de conflicto de version
+  - Actualiza la version local en FItemVersions tras cada escritura exitosa
+  - Se llama recursivamente sobre todos los hijos del nodo
+}
 procedure TForm1.MarcarHijosRecursivo(Nodo: TTreeNode; Marcado: Boolean;
   Query: TFDQuery; Forzar: Boolean = False);
 var
@@ -347,7 +378,6 @@ begin
     raise Exception.Create('El item ' + IntToStr(Integer(Nodo.Data)) +
       ' ha sido eliminado por otro usuario.');
 
-  // Actualizar versión local
   if Forzar then
   begin
     Query.Close;
@@ -368,6 +398,15 @@ begin
   end;
 end;
 
+{
+  Procedure que gestiona el clic sobre el checkbox de un nodo del arbol
+  - Detecta si el clic fue exactamente sobre el checkbox por posicion
+  - Inicia una transaccion para garantizar atomicidad
+  - Llama a MarcarHijosRecursivo para marcar el nodo y sus hijos
+  - Si hay conflicto de version muestra quien hizo el ultimo cambio
+  - Permite al usuario forzar el cambio o cancelar y recargar la lista
+  - Hace rollback si ocurre cualquier error
+}
 procedure TForm1.TreeViewClick(Sender: TObject);
 var
   Nodo: TTreeNode;
@@ -390,7 +429,6 @@ begin
   dm_data.FDConnection1.StartTransaction;
   try
     MarcarHijosRecursivo(Nodo, Nodo.Checked, dm_data.FDQuery2);
-    // Registro de historial tras éxito
     RegistrarHistorial(IdItem, 'COMPLETADO', BoolToStr(not Nodo.Checked, True));
     dm_data.FDConnection1.Commit;
   except
@@ -399,7 +437,6 @@ begin
       dm_data.FDConnection1.Rollback;
       if Pos('Conflicto de versión', E.Message) > 0 then
       begin
-        // Obtener información del último cambio
         if ObtenerUltimoCambio(IdItem, Usuario, Accion, Fecha) then
         begin
           if MessageDlg
@@ -408,7 +445,6 @@ begin
             [Usuario, Accion, DateTimeToStr(Fecha)]), mtConfirmation,
             [mbYes, mbNo], 0) = mrYes then
           begin
-            // Reintentar forzando la escritura
             dm_data.FDConnection1.StartTransaction;
             try
               MarcarHijosRecursivo(Nodo, Nodo.Checked, dm_data.FDQuery2, True);
@@ -417,8 +453,7 @@ begin
               dm_data.FDConnection1.Commit;
             except
               dm_data.FDConnection1.Rollback;
-              ShowMessage
-                ('No se pudo forzar el cambio. Se recargará la lista.');
+              ShowMessage('No se pudo forzar el cambio. Se recargará la lista.');
               RecargarListaActual;
             end;
           end
@@ -427,8 +462,7 @@ begin
         end
         else
         begin
-          ShowMessage
-            ('No se pudo obtener información del conflicto. Recargando lista...');
+          ShowMessage('No se pudo obtener información del conflicto. Recargando lista...');
           RecargarListaActual;
         end;
       end
@@ -441,6 +475,11 @@ begin
   end;
 end;
 
+{
+  Procedure que cambia el tema visual de la aplicacion
+  - Si el toggle esta activado aplica el tema claro (Aqua Light Slate)
+  - Si el toggle esta desactivado aplica el tema oscuro (Glossy)
+}
 procedure TForm1.ToggleSwitch1Click(Sender: TObject);
 begin
   if ToggleSwitch1.State = tssOn then
@@ -455,6 +494,11 @@ begin
   end;
 end;
 
+{
+  Procedure que rellena el submenu Abrir con las listas del proyecto activo
+  - Filtra por id_proyecto y ES_NOTA = 0 para mostrar solo listas de tareas
+  - Crea un TMenuItem por cada lista y le asigna el evento AbrirListaClick
+}
 procedure TForm1.mostrarListasCreadas(SubMenuItem: TMenuItem);
 var
   SubListaItem: TMenuItem;
@@ -477,6 +521,12 @@ begin
   dm_data.FDQuery3.Close;
 end;
 
+{
+  Procedure que abre la lista seleccionada desde el submenu
+  - Elimina el caracter & que Delphi añade automaticamente a los captions del menu
+  - Guarda el nombre de la lista activa en UltimoNombreLista para poder recargarla
+  - Llama a insertarLista para cargar el arbol con los items de la lista
+}
 procedure TForm1.AbrirListaClick(Sender: TObject);
 var
   Item: TMenuItem;
@@ -487,6 +537,12 @@ begin
   insertarLista(UltimoNombreLista);
 end;
 
+{
+  Procedure que detecta el boton del raton pulsado sobre el TreeView
+  - Si es clic izquierdo guarda el nodo como candidato a ser arrastrado
+  - Si es clic derecho guarda el nodo seleccionado para el menu contextual
+  - Si no hay nodo bajo el cursor desactiva el popup para no mostrarlo en el vacio
+}
 procedure TForm1.TreeViewMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 begin
@@ -505,6 +561,14 @@ begin
   end;
 end;
 
+{
+  Procedure que añade un nuevo item como hijo del nodo seleccionado
+  - Pide el nombre del nuevo item mediante InputBox
+  - Inserta el item en la BD con version = 0 y como hijo del nodo seleccionado
+  - Obtiene el id del nuevo item con LAST_INSERT_ID
+  - Registra la accion en el historial
+  - Añade el nodo al TreeView y lo registra en FItemVersions
+}
 procedure TForm1.pmAnadirClick(Sender: TObject);
 var
   NodoNuevo: TTreeNode;
@@ -543,6 +607,15 @@ begin
   CargarHistorial;
 end;
 
+{
+  Procedure que elimina el item seleccionado de la BD y del arbol
+  - Pide confirmacion al usuario antes de borrar
+  - Comprueba la version del item antes de eliminar (control de concurrencia)
+  - Si hay conflicto de version muestra quien hizo el ultimo cambio
+  - Permite al usuario forzar el borrado o cancelar y recargar
+  - Registra la accion en el historial si el borrado tiene exito
+  - Elimina el nodo del TreeView y su entrada en FItemVersions
+}
 procedure TForm1.pmEliminarClick(Sender: TObject);
 var
   IdItem, OldVersion: Integer;
@@ -567,7 +640,6 @@ begin
 
   if dm_data.FDQuery2.RowsAffected = 0 then
   begin
-    // Conflicto de versión
     if ObtenerUltimoCambio(IdItem, Usuario, Accion, Fecha) then
     begin
       if MessageDlg(Format('El usuario "%s" ha realizado la acción "%s" el %s.'
@@ -585,7 +657,6 @@ begin
           RecargarListaActual;
           Exit;
         end;
-        // Si borró, registrar historial y eliminar nodo
         RegistrarHistorial(IdItem, 'BORRADO', NodoSeleccionado.Text);
         FItemVersions.Remove(IdItem);
         TreeView1.Items.Delete(NodoSeleccionado);
@@ -596,14 +667,12 @@ begin
     end
     else
     begin
-      ShowMessage
-        ('El elemento fue modificado por otro usuario. Recargando lista...');
+      ShowMessage('El elemento fue modificado por otro usuario. Recargando lista...');
       RecargarListaActual;
     end;
   end
   else
   begin
-    // Éxito en la primera eliminación
     RegistrarHistorial(IdItem, 'BORRADO', NodoSeleccionado.Text);
     FItemVersions.Remove(IdItem);
     TreeView1.Items.Delete(NodoSeleccionado);
@@ -612,6 +681,15 @@ begin
   CargarHistorial;
 end;
 
+{
+  Procedure que renombra el item seleccionado
+  - Pide el nuevo nombre mediante InputBox
+  - Comprueba la version del item antes de actualizar (control de concurrencia)
+  - Si hay conflicto de version muestra quien hizo el ultimo cambio
+  - Permite al usuario forzar el renombrado o cancelar y recargar
+  - Actualiza la version local en FItemVersions tras el exito
+  - Registra la accion en el historial y actualiza el texto del nodo
+}
 procedure TForm1.pmRenombrarClick(Sender: TObject);
 var
   TextoNuevo: string;
@@ -657,18 +735,15 @@ begin
         dm_data.FDQuery2.ExecSQL;
         if dm_data.FDQuery2.RowsAffected = 0 then
         begin
-          ShowMessage
-            ('El ítem ha sido eliminado por otro usuario. Recargando...');
+          ShowMessage('El ítem ha sido eliminado por otro usuario. Recargando...');
           RecargarListaActual;
           Exit;
         end;
-        // Actualizar versión local
         dm_data.FDQuery2.Close;
         dm_data.FDQuery2.SQL.Text := 'SELECT version FROM item WHERE id = :id';
         dm_data.FDQuery2.ParamByName('id').AsInteger := IdItem;
         dm_data.FDQuery2.Open;
-        FItemVersions[IdItem] := dm_data.FDQuery2.FieldByName('version')
-          .AsInteger;
+        FItemVersions[IdItem] := dm_data.FDQuery2.FieldByName('version').AsInteger;
         dm_data.FDQuery2.Close;
 
         RegistrarHistorial(IdItem, 'TEXTO', NodoSeleccionado.Text);
@@ -679,8 +754,7 @@ begin
     end
     else
     begin
-      ShowMessage
-        ('El elemento fue modificado por otro usuario. Recargando lista...');
+      ShowMessage('El elemento fue modificado por otro usuario. Recargando lista...');
       RecargarListaActual;
     end;
   end
@@ -693,6 +767,13 @@ begin
   CargarHistorial;
 end;
 
+{
+  Procedure que crea una nueva lista de tareas en el proyecto activo
+  - Pide el nombre y la descripcion de la lista mediante InputBox
+  - Inserta la lista en la BD con ES_NOTA = 0
+  - Crea automaticamente un item raiz para que el arbol tenga punto de partida
+  - Refresca el submenu Abrir y carga la nueva lista en el arbol
+}
 procedure TForm1.insertarNuevaLista(Sender: TObject);
 var
   Texto, Descripcion: String;
@@ -726,6 +807,12 @@ begin
   insertarLista(Texto);
 end;
 
+{
+  Procedure que elimina una lista de tareas del proyecto activo
+  - Pide el nombre de la lista a borrar mediante InputBox
+  - Filtra por ES_NOTA = 0 para no borrar notas accidentalmente
+  - Refresca el submenu Abrir y limpia el arbol y el diccionario de versiones
+}
 procedure TForm1.borrarListaFunction(Sender: TObject);
 var
   Texto: String;
@@ -736,7 +823,8 @@ begin
     Exit;
 
   dm_data.FDQuery5.Close;
-  dm_data.FDQuery5.SQL.Text := 'DELETE FROM lista WHERE titulo = :nombre AND id_proyecto = :id_proyecto AND ES_NOTA = 0';
+  dm_data.FDQuery5.SQL.Text :=
+    'DELETE FROM lista WHERE titulo = :nombre AND id_proyecto = :id_proyecto AND ES_NOTA = 0';
   dm_data.FDQuery5.ParamByName('id_proyecto').AsInteger := IdProyectoActual;
   dm_data.FDQuery5.ParamByName('nombre').AsString := Texto;
   dm_data.FDQuery5.ExecSQL;
@@ -750,6 +838,12 @@ begin
   FItemVersions.Clear;
 end;
 
+{
+  Procedure que abre el selector de proyectos y recarga el formulario principal
+  - Abre Form4 en modo modal y espera a que el usuario seleccione un proyecto
+  - Refresca el submenu de listas con las del nuevo proyecto seleccionado
+  - Recarga la ultima lista activa o la primera disponible si no habia ninguna
+}
 procedure TForm1.btnAbrirProyectsClick(Sender: TObject);
 begin
   Form4.ShowModal;
@@ -760,6 +854,11 @@ begin
     insertarLista('');
 end;
 
+{
+  Procedure que acepta o rechaza el drop mientras el usuario arrastra un nodo
+  - Solo acepta el drop si el origen es el propio TreeView
+  - Resalta el nodo destino mientras se arrastra encima de el
+}
 procedure TForm1.TreeView1DragOver(Sender, Source: TObject; X, Y: Integer;
   State: TDragState; var Accept: Boolean);
 var
@@ -771,6 +870,15 @@ begin
     TreeView1.Selected := NodoDestino;
 end;
 
+{
+  Procedure que ejecuta el movimiento cuando se suelta un nodo sobre otro
+  - Comprueba que el destino no es el propio nodo ni un descendiente suyo (evita ciclos)
+  - Inicia una transaccion para garantizar atomicidad del movimiento
+  - Comprueba la version antes de mover (control de concurrencia)
+  - Actualiza id_item_padre y el orden de los hermanos en la BD
+  - Si hay conflicto de version permite al usuario forzar el movimiento
+  - Hace rollback si ocurre cualquier error y recarga la lista
+}
 procedure TForm1.TreeView1DragDrop(Sender, Source: TObject; X, Y: Integer);
 var
   NodoDestino, NodoHijo: TTreeNode;
@@ -853,7 +961,6 @@ begin
             DateTimeToStr(Fecha)]), mtConfirmation, [mbYes, mbNo], 0) = mrYes
           then
           begin
-            // Reintentar forzando
             dm_data.FDConnection1.StartTransaction;
             try
               dm_data.FDQuery2.Close;
@@ -868,7 +975,6 @@ begin
               if dm_data.FDQuery2.RowsAffected = 0 then
                 raise Exception.Create('El ítem ha sido eliminado');
 
-              // Actualizar versión local
               dm_data.FDQuery2.Close;
               dm_data.FDQuery2.SQL.Text :=
                 'SELECT version FROM item WHERE id = :id';
@@ -878,7 +984,6 @@ begin
                 ('version').AsInteger;
               dm_data.FDQuery2.Close;
 
-              // Reordenamiento forzado
               NodoHijo := NodoDestino.getFirstChild;
               i := 1;
               while NodoHijo <> nil do
@@ -936,6 +1041,11 @@ begin
   CargarHistorial;
 end;
 
+{
+  Procedure que recarga el submenu Abrir con las listas del proyecto activo
+  - Elimina todos los items actuales del submenu
+  - Vuelve a rellenarlo consultando la BD mediante mostrarListasCreadas
+}
 procedure TForm1.RecargarMenuListas;
 var
   SubItem: TMenuItem;
@@ -948,6 +1058,11 @@ begin
   mostrarListasCreadas(SubItem);
 end;
 
+{
+  Procedure que registra una accion del usuario en la tabla historial
+  - Guarda el id del item, la lista, el usuario, el tipo de cambio y el dato anterior
+  - Se llama despues de cada operacion exitosa sobre un item
+}
 procedure TForm1.RegistrarHistorial(IdItem: Integer; TipoCambio: String;
   DatoAnterior: String);
 begin
@@ -964,6 +1079,10 @@ begin
   dm_data.FDQuery7.Close;
 end;
 
+{
+  Procedure que recarga el historial al cambiar el nodo seleccionado en el arbol
+  - Solo actua si hay una lista activa cargada
+}
 procedure TForm1.TreeView1Change(Sender: TObject; Node: TTreeNode);
 begin
   if Node = nil then
@@ -974,6 +1093,12 @@ begin
   CargarHistorial;
 end;
 
+{
+  Procedure que recarga todos los datos del formulario principal desde la BD
+  - Refresca el submenu de listas
+  - Recarga el arbol con la lista activa
+  - Recarga el historial y las notas del proyecto
+}
 procedure TForm1.btnRecargarClick(Sender: TObject);
 begin
   RecargarMenuListas;
@@ -997,6 +1122,12 @@ begin
   CargarNotasProyecto;
 end;
 
+{
+  Procedure que abre el formulario visor de datos en modo modal
+  - Crea Form5 bajo demanda para garantizar que la conexion ya esta activa
+  - Libera el formulario al cerrarlo para no dejar memoria ocupada
+  - Recarga el historial al volver por si hubo cambios en el visor
+}
 procedure TForm1.btnVisorDatosClick(Sender: TObject);
 var
   Visor: TForm5;
@@ -1010,6 +1141,12 @@ begin
   CargarHistorial;
 end;
 
+{
+  Procedure que carga las notas del proyecto activo en el MemoNotas
+  - Si no hay proyecto activo limpia el memo y sale
+  - Consulta todas las listas con ES_NOTA = 1 del proyecto actual
+  - Muestra cada nota con su titulo y descripcion agrupados
+}
 procedure TForm1.CargarNotasProyecto;
 begin
   if IdProyectoActual = 0 then
@@ -1038,6 +1175,12 @@ begin
   dm_data.FDQuery8.Close;
 end;
 
+{
+  Procedure que inserta una nueva nota en la BD con ES_NOTA = 1
+  - Pide el titulo y el contenido de la nota mediante InputBox
+  - Inserta la nota en la tabla lista asociada al proyecto y usuario actuales
+  - Recarga el MemoNotas para mostrar la nueva nota
+}
 procedure TForm1.insertarNuevaNota(Sender: TObject);
 var
   Titulo, Contenido: String;
@@ -1059,6 +1202,12 @@ begin
   CargarNotasProyecto;
 end;
 
+{
+  Procedure que elimina una nota del proyecto activo por su titulo
+  - Pide el titulo de la nota a borrar mediante InputBox
+  - Filtra por ES_NOTA = 1 para no borrar listas de tareas accidentalmente
+  - Recarga el MemoNotas tras el borrado
+}
 procedure TForm1.borrarNota(Sender: TObject);
 var
   Titulo: String;
@@ -1076,6 +1225,10 @@ begin
   CargarNotasProyecto;
 end;
 
+{
+  Procedure que recarga la lista actualmente abierta en el arbol
+  - Si hay lista activa la recarga por titulo, si no carga la primera disponible
+}
 procedure TForm1.RecargarListaActual;
 begin
   if TituloListaActual <> '' then
@@ -1084,11 +1237,22 @@ begin
     insertarLista('');
 end;
 
+{
+  Procedure que actualiza la version local de un item en el diccionario
+  - Se usa para mantener sincronizada la version local con la de la BD
+}
 procedure TForm1.ActualizarVersionItem(IdItem: Integer; NuevaVersion: Integer);
 begin
   FItemVersions[IdItem] := NuevaVersion;
 end;
 
+{
+  Procedure que carga el historial de la lista activa en el DBGrid
+  - Si no hay lista activa cierra la query y sale
+  - Consulta el historial ordenado por fecha descendente
+  - Hace JOIN con usuarios para mostrar el nombre y con item para mostrar el texto
+  - Usa COALESCE para mostrar el dato_anterior si el item ya fue borrado
+}
 procedure TForm1.CargarHistorial;
 begin
   if IdListaActual = 0 then
