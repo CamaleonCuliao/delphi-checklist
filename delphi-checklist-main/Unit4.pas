@@ -46,6 +46,7 @@ type
 var
   Form4: TForm4;
   IdProyectoActual: Integer = 0;
+  RolProyecto: string = '';
 
 implementation
 
@@ -240,6 +241,8 @@ end;
 
 {
   Procedure para abrir el proyecto seleccionado en el grid
+  - Guarda el id del proyecto en IdProyectoActual
+  - Consulta y guarda el rol del usuario en ese proyecto en RolProyecto
 }
 procedure TForm4.btnAccederClick(Sender: TObject);
 begin
@@ -249,8 +252,22 @@ begin
     Exit;
   end;
 
-  // Necesitamos el id del proyecto, añadirlo a la query de CargarProyectos
   IdProyectoActual := dm_data.FDQuery6.FieldByName('id').AsInteger;
+
+  dm_data.FDQueryAux.Close;
+  dm_data.FDQueryAux.SQL.Text :=
+    'SELECT rol FROM usuario_proyecto ' +
+    'WHERE id_usuario = :id_usuario AND id_proyecto = :id_proyecto';
+  dm_data.FDQueryAux.ParamByName('id_usuario').AsInteger := IdUsuarioActual;
+  dm_data.FDQueryAux.ParamByName('id_proyecto').AsInteger := IdProyectoActual;
+  dm_data.FDQueryAux.Open;
+
+  if not dm_data.FDQueryAux.IsEmpty then
+    RolProyecto := dm_data.FDQueryAux.FieldByName('rol').AsString
+  else
+    RolProyecto := 'miembro';
+
+  dm_data.FDQueryAux.Close;
   ModalResult := mrOk;
 end;
 
