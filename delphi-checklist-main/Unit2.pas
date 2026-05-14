@@ -282,6 +282,13 @@ begin
 
   IdUsuarioActual := dm_data.FDQuery2.FieldByName('id').AsInteger; //Guardar en una variable el usuario para los proyectos
 
+  // Cargar el rol de aplicacion del usuario
+  dm_data.FDQuery2.Close;
+  dm_data.FDQuery2.SQL.Text :=
+    'SELECT rol FROM usuarios WHERE id = :id';
+  dm_data.FDQuery2.ParamByName('id').AsInteger := IdUsuarioActual;
+  dm_data.FDQuery2.Open;
+  RolApp := dm_data.FDQuery2.FieldByName('rol').AsString;
   dm_data.FDQuery2.Close;
 
   // Cerrar el modal con éxito
