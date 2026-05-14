@@ -7,7 +7,7 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
   System.Classes, Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs,
   Vcl.ExtCtrls, Data.DB, Vcl.StdCtrls, Vcl.Grids, Vcl.DBGrids,
-  Vcl.Buttons, Vcl.ComCtrls;
+  Vcl.Buttons, Vcl.ComCtrls, System.Hash;
 
 type
   TForm4 = class(TForm)
@@ -39,6 +39,7 @@ type
     procedure btnBorrarProyectClick(Sender: TObject);
   private
     procedure CargarProyectos;
+    function HashPass(const s: String): String;
   public
   end;
 
@@ -49,6 +50,12 @@ var
 implementation
 
 {$R *.dfm}
+
+// Funcion para encriptar las contraseñas
+function TForm4.HashPass(const s: String): String;
+begin
+  Result := THashMD5.GetHashString(s);
+end;
 
 procedure TForm4.CargarProyectos;
 begin
@@ -154,7 +161,7 @@ begin
     'VALUES (:id_usuario, :nombre, :codigo, :descripcion)';
   dm_data.FDQuery6.ParamByName('id_usuario').AsInteger := IdUsuarioActual;
   dm_data.FDQuery6.ParamByName('nombre').AsString := Nombre;
-  dm_data.FDQuery6.ParamByName('codigo').AsString := Codigo;
+  dm_data.FDQuery6.ParamByName('codigo').AsString := HashPass(Codigo);
   dm_data.FDQuery6.ParamByName('descripcion').AsString := Descripcion;
   dm_data.FDQuery6.ExecSQL;
 
@@ -200,7 +207,7 @@ begin
   // Buscar proyecto por código
   dm_data.FDQuery6.Close;
   dm_data.FDQuery6.SQL.Text := 'SELECT id FROM proyecto WHERE codigo = :codigo';
-  dm_data.FDQuery6.ParamByName('codigo').AsString := Codigo;
+  dm_data.FDQuery6.ParamByName('codigo').AsString := HashPass(Codigo);
   dm_data.FDQuery6.Open;
 
   if dm_data.FDQuery6.IsEmpty then
