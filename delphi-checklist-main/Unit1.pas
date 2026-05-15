@@ -60,6 +60,7 @@ type
     procedure insertarNuevaNota(Sender: TObject);
     procedure borrarNota(Sender: TObject);
     procedure btnVisorDatosClick(Sender: TObject);
+    procedure CargarUsuariosProyecto;
 
   private
     NodoSeleccionado: TTreeNode;
@@ -295,6 +296,7 @@ begin
   dm_data.FDQuery1.Close;
   TreeView1.FullExpand;
   CargarNotasProyecto;
+  CargarUsuariosProyecto;
   CargarHistorial;
 end;
 
@@ -1122,6 +1124,7 @@ begin
     dm_data.FDQuery7.Open;
   end;
   CargarNotasProyecto;
+  CargarUsuariosProyecto;
 end;
 
 {
@@ -1273,4 +1276,28 @@ begin
   dm_data.FDQuery7.Open;
 end;
 
+{
+  Procedure que carga los usuarios del proyecto activo en el DBGrid2
+  - Si no hay proyecto activo cierra la query y sale
+  - Consulta nombre, email y rol de todos los usuarios del proyecto
+  - Se recarga al cambiar de proyecto o al pulsar Recargar
+}
+procedure TForm1.CargarUsuariosProyecto;
+begin
+  if IdProyectoActual = 0 then
+  begin
+    dm_data.FDQuery9.Close;
+    Exit;
+  end;
+
+  dm_data.FDQuery9.Close;
+  dm_data.FDQuery9.SQL.Text :=
+    'SELECT u.nombre as Nombre, u.email as Email, up.rol as Rol ' +
+    'FROM usuarios u ' +
+    'INNER JOIN usuario_proyecto up ON u.id = up.id_usuario ' +
+    'WHERE up.id_proyecto = :id_proyecto ' +
+    'ORDER BY up.rol ASC, u.nombre ASC';
+  dm_data.FDQuery9.ParamByName('id_proyecto').AsInteger := IdProyectoActual;
+  dm_data.FDQUery9.Open;
+end;
 end.

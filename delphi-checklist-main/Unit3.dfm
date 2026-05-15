@@ -87,6 +87,7 @@ object dm_data: Tdm_data
     Top = 160
   end
   object DataSource3: TDataSource
+    DataSet = FDQuery9
     Left = 208
     Top = 176
   end
