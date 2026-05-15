@@ -150,17 +150,18 @@ end;
   Tab 4: ITEM        -> HISTORIAL  (un item tiene varios registros de historial)
 }
 procedure TForm5.FormCreate(Sender: TObject);
+  // Función auxiliar para añadir una columna a un grid
+  procedure AddColumn(Grid: TDBGrid; const AFieldName, ATitle: string; AWidth: Integer = 100);
+  var
+    Col: TColumn;
+  begin
+    Col := Grid.Columns.Add;
+    Col.FieldName := AFieldName;
+    Col.Title.Caption := ATitle;
+    Col.Width := AWidth;
+  end;
 begin
   dm_data.FDConnection1.Connected := True;
-
-  DBGrid1.Options := DBGrid1.Options - [dgEditing];
-  DBGrid2.Options := DBGrid1.Options - [dgEditing];
-  DBGrid3.Options := DBGrid1.Options - [dgEditing];
-  DBGrid4.Options := DBGrid1.Options - [dgEditing];
-  DBGrid5.Options := DBGrid1.Options - [dgEditing];
-  DBGrid6.Options := DBGrid1.Options - [dgEditing];
-  DBGrid7.Options := DBGrid1.Options - [dgEditing];
-  DBGrid8.Options := DBGrid1.Options - [dgEditing];
 
   // -----------------------------------------------
   // TAB 1: Usuarios (maestro) → Proyectos (detalle)
@@ -186,6 +187,20 @@ begin
   DBNavigator1.DataSource := DSUsuarios;
   DBGrid2.DataSource := DSProyectosU;
   DBNavigator2.DataSource := DSProyectosU;
+
+  // Columnas personalizadas para DBGrid1 (Usuarios)
+  DBGrid1.Columns.Clear;
+  AddColumn(DBGrid1, 'id', 'ID', 50);
+  AddColumn(DBGrid1, 'nombre', 'Nombre', 150);
+  AddColumn(DBGrid1, 'email', 'Correo electrónico', 200);
+
+  // Columnas personalizadas para DBGrid2 (Proyectos del usuario)
+  DBGrid2.Columns.Clear;
+  AddColumn(DBGrid2, 'id', 'ID', 50);
+  AddColumn(DBGrid2, 'nombre', 'Nombre', 150);
+  AddColumn(DBGrid2, 'codigo', 'Código', 80);
+  AddColumn(DBGrid2, 'descripcion', 'Descripción', 200);
+  AddColumn(DBGrid2, 'fecha_creacion', 'Creado', 120);
 
   QUsuarios.Open;
 
@@ -215,6 +230,21 @@ begin
   DBGrid4.DataSource := DSListasP;
   DBNavigator4.DataSource := DSListasP;
 
+  // Columnas personalizadas para DBGrid3 (Proyectos)
+  DBGrid3.Columns.Clear;
+  AddColumn(DBGrid3, 'id', 'ID', 50);
+  AddColumn(DBGrid3, 'nombre', 'Nombre', 150);
+  AddColumn(DBGrid3, 'codigo', 'Código', 80);
+  AddColumn(DBGrid3, 'descripcion', 'Descripción', 200);
+
+  // Columnas personalizadas para DBGrid4 (Listas del proyecto)
+  DBGrid4.Columns.Clear;
+  AddColumn(DBGrid4, 'id', 'ID', 50);
+  AddColumn(DBGrid4, 'titulo', 'Título', 150);
+  AddColumn(DBGrid4, 'descripcion', 'Descripción', 200);
+  AddColumn(DBGrid4, 'ES_NOTA', '¿Es nota?', 60);
+  AddColumn(DBGrid4, 'fecha_creacion', 'Creado', 120);
+
   QProyectos.Open;
 
   // -----------------------------------------------
@@ -243,6 +273,22 @@ begin
   DBGrid6.DataSource := DSItemsL;
   DBNavigator6.DataSource := DSItemsL;
 
+  // Columnas para DBGrid5 (Listas)
+  DBGrid5.Columns.Clear;
+  AddColumn(DBGrid5, 'id', 'ID', 50);
+  AddColumn(DBGrid5, 'titulo', 'Título', 150);
+  AddColumn(DBGrid5, 'descripcion', 'Descripción', 200);
+  AddColumn(DBGrid5, 'ES_NOTA', 'Nota', 50);
+
+  // Columnas para DBGrid6 (Ítems de la lista)
+  DBGrid6.Columns.Clear;
+  AddColumn(DBGrid6, 'id', 'ID', 50);
+  AddColumn(DBGrid6, 'texto', 'Texto', 200);
+  AddColumn(DBGrid6, 'completado', 'Completado', 70);
+  AddColumn(DBGrid6, 'orden', 'Orden', 50);
+  AddColumn(DBGrid6, 'fecha_creacion', 'Creado', 120);
+  AddColumn(DBGrid6, 'fecha_completado', 'Completado el', 120);
+
   QListas.Open;
 
   // -----------------------------------------------
@@ -269,8 +315,20 @@ begin
   DBGrid8.DataSource := DSHistorialI;
   DBNavigator8.DataSource := DSHistorialI;
 
-  QItems.Open;
+  // Columnas para DBGrid7 (Ítems)
+  DBGrid7.Columns.Clear;
+  AddColumn(DBGrid7, 'id', 'ID', 50);
+  AddColumn(DBGrid7, 'texto', 'Texto', 200);
+  AddColumn(DBGrid7, 'completado', 'Completado', 70);
 
+  // Columnas para DBGrid8 (Historial del ítem)
+  DBGrid8.Columns.Clear;
+  AddColumn(DBGrid8, 'id', 'ID', 50);
+  AddColumn(DBGrid8, 'tipo_cambio', 'Tipo de cambio', 120);
+  AddColumn(DBGrid8, 'dato_anterior', 'Dato anterior', 180);
+  AddColumn(DBGrid8, 'fecha_cambio', 'Fecha del cambio', 140);
+
+  QItems.Open;
 end;
 
 end.

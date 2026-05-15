@@ -67,6 +67,27 @@ object Form5: TForm5
         TitleFont.Height = -12
         TitleFont.Name = 'Segoe UI'
         TitleFont.Style = []
+        Columns = <
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end>
       end
       object DBNavigator2: TDBNavigator
         Left = 5
@@ -86,6 +107,28 @@ object Form5: TForm5
         TitleFont.Height = -12
         TitleFont.Name = 'Segoe UI'
         TitleFont.Style = []
+        Columns = <
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Width = 148
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end>
       end
     end
     object tabProyectos: TTabSheet
@@ -134,6 +177,32 @@ object Form5: TForm5
         TitleFont.Height = -12
         TitleFont.Name = 'Segoe UI'
         TitleFont.Style = []
+        Columns = <
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Width = 138
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end>
       end
       object DBNavigator4: TDBNavigator
         Left = 5
@@ -153,6 +222,35 @@ object Form5: TForm5
         TitleFont.Height = -12
         TitleFont.Name = 'Segoe UI'
         TitleFont.Style = []
+        Columns = <
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end>
       end
     end
     object tabListas: TTabSheet
@@ -201,6 +299,35 @@ object Form5: TForm5
         TitleFont.Height = -12
         TitleFont.Name = 'Segoe UI'
         TitleFont.Style = []
+        Columns = <
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end>
       end
       object DBNavigator6: TDBNavigator
         Left = 5
@@ -210,8 +337,8 @@ object Form5: TForm5
         TabOrder = 2
       end
       object DBGrid6: TDBGrid
-        Left = 5
-        Top = 330
+        Left = 3
+        Top = 333
         Width = 980
         Height = 270
         TabOrder = 3
@@ -220,6 +347,43 @@ object Form5: TForm5
         TitleFont.Height = -12
         TitleFont.Name = 'Segoe UI'
         TitleFont.Style = []
+        Columns = <
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end>
       end
     end
     object tabItems: TTabSheet
@@ -268,6 +432,43 @@ object Form5: TForm5
         TitleFont.Height = -12
         TitleFont.Name = 'Segoe UI'
         TitleFont.Style = []
+        Columns = <
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end>
       end
       object DBNavigator8: TDBNavigator
         Left = 5
@@ -287,6 +488,36 @@ object Form5: TForm5
         TitleFont.Height = -12
         TitleFont.Name = 'Segoe UI'
         TitleFont.Style = []
+        Columns = <
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Width = 68
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end
+          item
+            Expanded = False
+            Visible = True
+          end>
       end
     end
   end
