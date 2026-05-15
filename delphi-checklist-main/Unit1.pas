@@ -14,7 +14,7 @@ uses
   FireDAC.Stan.Param, FireDAC.DatS, FireDAC.DApt.Intf, FireDAC.DApt, Vcl.Grids,
   Vcl.DBGrids, FireDAC.Comp.DataSet, Vcl.ExtCtrls, Vcl.Buttons, Vcl.WinXCtrls,
   Vcl.Themes, System.UITypes, System.ImageList, Vcl.ImgList,
-  System.Generics.Collections;
+  System.Generics.Collections, System.Hash;
 
 type
   TForm1 = class(TForm)
@@ -34,6 +34,7 @@ type
     btnVisorDatos: TSpeedButton;
     DBGrid2: TDBGrid;
     LblUsuarios: TLabel;
+    btnCambiarCodigo: TSpeedButton;
 
     procedure AbrirListaClick(Sender: TObject);
     procedure mostrarListasCreadas(SubMenuItem: TMenuItem);
@@ -61,6 +62,7 @@ type
     procedure borrarNota(Sender: TObject);
     procedure btnVisorDatosClick(Sender: TObject);
     procedure CargarUsuariosProyecto;
+    procedure btnCambiarCodigoClick(Sender: TObject);
 
   private
     NodoSeleccionado: TTreeNode;
@@ -74,6 +76,7 @@ type
     procedure ActualizarVersionItem(IdItem: Integer; NuevaVersion: Integer);
     function ObtenerUltimoCambio(IdItem: Integer; out Usuario, Accion: string;
       out Fecha: TDateTime): Boolean;
+    function HashMD5(const s: String): String;
   public
     procedure RecargarMenuListas;
     procedure insertarLista(nombre: String);
@@ -99,6 +102,12 @@ uses
   - Construye el menu de Listas dinamicamente
   - Configura el DBGrid del historial con sus columnas
 }
+
+function TForm1.HashMD5(const s: String): String;
+begin
+  Result := THashMD5.GetHashString(s);
+end;
+
 procedure TForm1.FormCreate(Sender: TObject);
 var
   MenuItem: TMenuItem;
@@ -1137,12 +1146,19 @@ procedure TForm1.btnVisorDatosClick(Sender: TObject);
 var
   Visor: TForm5;
 begin
+  if RolApp <> 'admin_aplicacion' then
+  begin
+    ShowMessage('No es posible acceder a esta opcion si no eres administrador de la app');
+    Exit;
+  end;
+
   Visor := TForm5.Create(Application);
   try
     Visor.ShowModal;
   finally
     Visor.Free;
   end;
+
   CargarHistorial;
 end;
 
@@ -1298,6 +1314,49 @@ begin
     'WHERE up.id_proyecto = :id_proyecto ' +
     'ORDER BY up.rol ASC, u.nombre ASC';
   dm_data.FDQuery9.ParamByName('id_proyecto').AsInteger := IdProyectoActual;
-  dm_data.FDQUery9.Open;
+  dm_data.FDQuery9.Open;
+end;
+
+{
+  Procedure que permite cambiar el codigo de acceso del proyecto
+  - Solo funciona para admin del proyecto y admin_aplicacion
+  - Si el usuario es miembro muestra un mensaje de error
+  - Comprueba que el nuevo codigo no este en uso por otro proyecto
+  - Actualiza el codigo en la BD
+}
+procedure TForm1.btnCambiarCodigoClick(Sender: TObject);
+var
+  NuevoCodigo: string;
+begin
+  if(RolProyecto <> 'admin') and (RolApp <> 'admin_aplicacion') then
+  begin
+    ShowMessage('No tienes permisos para cambiar el código del proyecto.');
+    Exit;
+  end;
+
+  NuevoCodigo := InputBox('Cambiar código', 'Nuevo código del proyecto:', '');
+  if Trim(NuevoCodigo) = '' then Exit;
+
+  dm_data.FDQuery10.Close;
+  dm_data.FDQuery10.SQL.Text := 'SELECT id FROM proyecto WHERE codigo = :codigo AND id <> :id_proyecto';
+  dm_data.FDQuery10.ParamByName('codigo').AsString := HashMD5(Trim(NuevoCodigo));
+  dm_data.FDQuery10.ParamByName('id_proyecto').AsInteger := IdProyectoActual;
+  dm_data.FDQuery10.Open;
+
+  if not dm_data.FDQuery10.IsEmpty then
+  begin
+    ShowMessage('Ese código ya está en uso por otro proyecto.');
+    dm_data.FDQuery10.Close;
+    Exit;
+  end;
+  dm_data.FDQuery10.Close;
+
+  dm_data.FDQuery10.SQL.Text := 'UPDATE proyecto SET codigo = :codigo WHERE id = :id_proyecto';
+  dm_data.FDQuery10.ParamByName('codigo').AsString := HashMD5(Trim(NuevoCodigo));
+  dm_data.FDQuery10.ParamByName('id_proyecto').AsInteger := IdProyectoActual;
+  dm_data.FDQuery10.ExecSQL;
+  dm_data.FDQuery10.Close;
+
+  ShowMessage('Código actualizado a "' + Trim(NuevoCodigo) + '".');
 end;
 end.

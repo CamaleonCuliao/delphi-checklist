@@ -26,6 +26,7 @@ type
     FDQueryAux: TFDQuery;
     FDQuery9: TFDQuery;
     DataSource3: TDataSource;
+    FDQuery10: TFDQuery;
   private
     { Private declarations }
   public

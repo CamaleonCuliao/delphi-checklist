@@ -30,10 +30,10 @@ object Form1: TForm1
     OnClick = btnAbrirProyectsClick
   end
   object btnRecargar: TSpeedButton
-    Left = 817
-    Top = 27
+    Left = 936
+    Top = 8
     Width = 100
-    Height = 25
+    Height = 44
     Caption = #55357#56580' Recargar'
     OnClick = btnRecargarClick
   end
@@ -70,6 +70,14 @@ object Form1: TForm1
     Font.Name = 'Segoe UI'
     Font.Style = [fsBold]
     ParentFont = False
+  end
+  object btnCambiarCodigo: TSpeedButton
+    Left = 1042
+    Top = 8
+    Width = 120
+    Height = 44
+    Caption = 'Cambiar Codigo'
+    OnClick = btnCambiarCodigoClick
   end
   object DBGrid1: TDBGrid
     Left = 680
@@ -183,12 +191,12 @@ object Form1: TForm1
       end>
   end
   object MainMenu1: TMainMenu
-    Left = 944
-    Top = 16
+    Left = 640
+    Top = 536
   end
   object PopupMenu1: TPopupMenu
-    Left = 976
-    Top = 16
+    Left = 640
+    Top = 592
     object pmAnadir: TMenuItem
       Caption = 'A'#241'adir'
     end
