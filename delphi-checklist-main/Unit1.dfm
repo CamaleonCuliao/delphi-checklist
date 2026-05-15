@@ -58,11 +58,24 @@ object Form1: TForm1
     Caption = 'Ver datos'
     OnClick = btnVisorDatosClick
   end
+  object LblUsuarios: TLabel
+    Left = 680
+    Top = 406
+    Width = 120
+    Height = 15
+    Caption = 'Usuarios del proyecto'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -12
+    Font.Name = 'Segoe UI'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
   object DBGrid1: TDBGrid
     Left = 680
     Top = 58
     Width = 611
-    Height = 383
+    Height = 319
     DataSource = dm_data.DataSource2
     TabOrder = 0
     TitleFont.Charset = DEFAULT_CHARSET
@@ -135,13 +148,47 @@ object Form1: TForm1
     ScrollBars = ssVertical
     TabOrder = 1
   end
+  object DBGrid2: TDBGrid
+    Left = 680
+    Top = 424
+    Width = 611
+    Height = 232
+    DataSource = dm_data.DataSource3
+    Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
+    TabOrder = 4
+    TitleFont.Charset = DEFAULT_CHARSET
+    TitleFont.Color = clWindowText
+    TitleFont.Height = -12
+    TitleFont.Name = 'Segoe UI'
+    TitleFont.Style = []
+    Columns = <
+      item
+        Expanded = False
+        FieldName = 'Nombre'
+        Title.Caption = 'Usuario'
+        Width = 180
+        Visible = True
+      end
+      item
+        Expanded = False
+        FieldName = 'Email'
+        Width = 290
+        Visible = True
+      end
+      item
+        Expanded = False
+        FieldName = 'Rol'
+        Width = 120
+        Visible = True
+      end>
+  end
   object MainMenu1: TMainMenu
-    Left = 776
-    Top = 512
+    Left = 944
+    Top = 16
   end
   object PopupMenu1: TPopupMenu
-    Left = 864
-    Top = 512
+    Left = 976
+    Top = 16
     object pmAnadir: TMenuItem
       Caption = 'A'#241'adir'
     end

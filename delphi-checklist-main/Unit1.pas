@@ -32,6 +32,8 @@ type
     MemoNotas: TMemo;
     LblNotas: TLabel;
     btnVisorDatos: TSpeedButton;
+    DBGrid2: TDBGrid;
+    LblUsuarios: TLabel;
 
     procedure AbrirListaClick(Sender: TObject);
     procedure mostrarListasCreadas(SubMenuItem: TMenuItem);
