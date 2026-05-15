@@ -35,6 +35,8 @@ type
     DBGrid2: TDBGrid;
     LblUsuarios: TLabel;
     btnCambiarCodigo: TSpeedButton;
+    PopupMenu2: TPopupMenu;
+    pmExpulsar: TMenuItem;
 
     procedure AbrirListaClick(Sender: TObject);
     procedure mostrarListasCreadas(SubMenuItem: TMenuItem);
@@ -63,6 +65,7 @@ type
     procedure btnVisorDatosClick(Sender: TObject);
     procedure CargarUsuariosProyecto;
     procedure btnCambiarCodigoClick(Sender: TObject);
+    procedure pmExpulsarClick(Sender: TObject);
 
   private
     NodoSeleccionado: TTreeNode;
@@ -1358,5 +1361,55 @@ begin
   dm_data.FDQuery10.Close;
 
   ShowMessage('Código actualizado a "' + Trim(NuevoCodigo) + '".');
+end;
+
+{
+  Procedure que expulsa al usuario seleccionado en el DBGrid2
+  - Solo accesible para admin del proyecto y admin_aplicacion
+  - Obtiene el nombre del usuario seleccionado en el grid
+  - Pide confirmacion antes de expulsar
+  - Elimina la relacion del usuario con el proyecto en usuario_proyecto
+  - Recarga el grid de usuarios al terminar
+}
+procedure TForm1.pmExpulsarClick(Sender: TObject);
+var
+  NombreUsuario: string;
+  RolUsuario: string;
+begin
+  if (RolProyecto <> 'admin') and (RolApp <> 'admin_aplicacion') then
+  begin
+    ShowMessage('No tienes permisos para expulsar usuarios.');
+    Exit;
+  end;
+
+  if dm_data.FDQuery9.IsEmpty then
+    Exit;
+
+  NombreUsuario := dm_data.FDQuery9.FieldByName('Nombre').AsString;
+  RolUsuario := dm_data.FDQuery9.FieldByName('Rol').AsString;
+
+  // No permitir expulsar a otros admins
+  if RolUsuario = 'admin' then
+  begin
+    ShowMessage('No puedes expulsar a otro administrador.');
+    Exit;
+  end;
+
+  if MessageDlg('¿Expulsar a "' + NombreUsuario + '" del proyecto?',
+    mtConfirmation, [mbYes, mbNo], 0) = mrNo then
+    Exit;
+
+  dm_data.FDQuery10.Close;
+  dm_data.FDQuery10.SQL.Text :=
+    'DELETE FROM usuario_proyecto ' +
+    'WHERE id_usuario = (SELECT id FROM usuarios WHERE nombre = :nombre) ' +
+    'AND id_proyecto = :id_proyecto';
+  dm_data.FDQuery10.ParamByName('nombre').AsString := NombreUsuario;
+  dm_data.FDQuery10.ParamByName('id_proyecto').AsInteger := IdProyectoActual;
+  dm_data.FDQuery10.ExecSQL;
+  dm_data.FDQuery10.Close;
+
+  ShowMessage('"' + NombreUsuario + '" ha sido expulsado del proyecto.');
+  CargarUsuariosProyecto;
 end;
 end.

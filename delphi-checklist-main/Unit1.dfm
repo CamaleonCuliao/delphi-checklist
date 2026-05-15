@@ -158,11 +158,12 @@ object Form1: TForm1
   end
   object DBGrid2: TDBGrid
     Left = 680
-    Top = 424
+    Top = 427
     Width = 611
     Height = 232
     DataSource = dm_data.DataSource3
     Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
+    PopupMenu = PopupMenu2
     TabOrder = 4
     TitleFont.Charset = DEFAULT_CHARSET
     TitleFont.Color = clWindowText
@@ -205,6 +206,14 @@ object Form1: TForm1
     end
     object pmRenombrar: TMenuItem
       Caption = 'Renombrar'
+    end
+  end
+  object PopupMenu2: TPopupMenu
+    Left = 640
+    Top = 496
+    object pmExpulsar: TMenuItem
+      Caption = 'Expulsar Usuario'
+      OnClick = pmExpulsarClick
     end
   end
 end
