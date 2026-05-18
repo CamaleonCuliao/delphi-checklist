@@ -647,6 +647,8 @@ begin
     mtConfirmation, [mbYes, mbNo], 0) = mrNo then
     Exit;
 
+  RegistrarHistorial(IdItem, 'BORRADO', NodoSeleccionado.Text);
+
   dm_data.FDQuery2.Close;
   dm_data.FDQuery2.SQL.Text :=
     'DELETE FROM item WHERE id = :id AND version = :old_version';
@@ -673,7 +675,6 @@ begin
           RecargarListaActual;
           Exit;
         end;
-        RegistrarHistorial(IdItem, 'BORRADO', NodoSeleccionado.Text);
         FItemVersions.Remove(IdItem);
         TreeView1.Items.Delete(NodoSeleccionado);
         NodoSeleccionado := nil;
@@ -689,7 +690,6 @@ begin
   end
   else
   begin
-    RegistrarHistorial(IdItem, 'BORRADO', NodoSeleccionado.Text);
     FItemVersions.Remove(IdItem);
     TreeView1.Items.Delete(NodoSeleccionado);
     NodoSeleccionado := nil;

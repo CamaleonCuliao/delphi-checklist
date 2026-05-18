@@ -8,6 +8,8 @@ object dm_data: Tdm_data
       'Database=delphiBDPauBorja'
       'Password=#fvS9aCQe9x_5gdk'
       'DriverID=MySQL')
+    Connected = True
+    LoginPrompt = False
     Left = 56
     Top = 24
   end
